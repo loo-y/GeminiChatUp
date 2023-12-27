@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, ChangeEvent, KeyboardEvent, useRef, useMemo } from 'react'
+import React, { useState, ChangeEvent, KeyboardEvent, useRef, useMemo, useEffect } from 'react'
 import { Roles } from '@/app/shared/interfaces'
 import _ from 'lodash'
 import { getChatState, getGeminiChatAnswer, updateConversation } from '../../(pages)/chat/slice'
@@ -46,9 +46,9 @@ const ChatBox = () => {
     const { history, conversationId } = conversation || {}
 
     return (
-        <div className="__chatbox__ flex h-full flex-col overflow-hidden">
-            <div className="title h-20 flex border-l border-slate-300 border-solid rounded-lg"></div>
-            <div className="flex relative chatinfo h-full rounded-br-lg bg-slate-500">
+        <div className="__chatbox__ flex h-full flex-col ">
+            <div className="title h-20 flex border-l border-slate-300 border-solid rounded-tr-lg"></div>
+            <div className="flex relative chatinfo h-full rounded-br-lg bg-slate-500 overflow-hidden">
                 <ChatContent contentList={history} />
                 <ChatInput conversation={conversation} />
             </div>
@@ -60,16 +60,28 @@ interface IChatContentProps {
     contentList?: IChatItem[]
 }
 const ChatContent = ({ contentList }: IChatContentProps) => {
-    if (_.isEmpty(contentList)) {
-        return <div className="__chat_content__ flex "></div>
-    }
+    const contentRef = useRef(null)
+    useEffect(() => {
+        if (contentRef.current) {
+            const theElement = contentRef.current as HTMLElement
+            theElement.scrollTo(0, theElement.scrollHeight)
+        }
+    }, [contentList])
 
     const roleAiClass = ` justify-start`,
         roleHumanClass = ` justify-end `
     const roleAiInnerClass = ` bg-white `,
         roleHumanInnerClass = ` bg-lightGreen `
+
+    if (_.isEmpty(contentList)) {
+        return <div className="__chat_content__ flex "></div>
+    }
+
     return (
-        <div className="__chat_content__ relative mt-10 mb-36 mx-20 overflow-scroll w-full">
+        <div
+            className="__chat_content__ relative mt-10 mb-36 ml-20 mr-[4.5rem] pr-2 overflow-scroll w-full"
+            ref={contentRef}
+        >
             <div className="flex flex-col gap-6  w-full">
                 {_.map(contentList, (contentItem, index) => {
                     const { role, parts, timsStamp } = contentItem || {}

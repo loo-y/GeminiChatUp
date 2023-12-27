@@ -29,7 +29,7 @@ export const fetchGeminiChat = async ({
                 ...commonOptions,
                 body: JSON.stringify({ ...jsonBody }),
             }),
-            fetchTimeout(10),
+            fetchTimeout(20),
         ])
         if (response instanceof Response) {
             result = await response.json()

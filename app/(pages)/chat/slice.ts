@@ -89,6 +89,7 @@ export const getGeminiChatAnswer = createAsyncThunk(
                     parts: [{ text: inputText }],
                     timsStamp: Date.now(),
                 },
+                isFetching: true,
             })
         )
 
@@ -115,13 +116,17 @@ export const chatSlice = createSlice({
         updateState: (state, action: PayloadAction<Partial<ChatState>>) => {
             return { ...state, ...action.payload }
         },
-        updateConversation: (state, action: PayloadAction<{ conversationId: string; chatItem: IChatItem }>) => {
-            const { conversationId, chatItem } = action.payload || {}
+        updateConversation: (
+            state,
+            action: PayloadAction<{ conversationId: string; chatItem: IChatItem; isFetching: boolean }>
+        ) => {
+            const { conversationId, chatItem, isFetching } = action.payload || {}
             let conversationList = _.clone(state.conversationList)
             state.conversationList = updateConversationById({
                 conversationId,
                 conversationList,
                 chatItem,
+                isFetching,
             })
         },
     },
@@ -137,6 +142,7 @@ export const chatSlice = createSlice({
                             role: Roles.model,
                             parts: [{ text }],
                         },
+                        isFetching: false,
                     })
                     state.conversationList = conversationList
                 }
@@ -155,16 +161,19 @@ export default chatSlice.reducer
 const updateConversationById = ({
     conversationId,
     chatItem,
+    isFetching,
     conversationList,
 }: {
     conversationId: string
     chatItem: IChatItem
+    isFetching: boolean
     conversationList: ChatState['conversationList']
 }) => {
     const newConversationList = _.clone(conversationList)
     let hasTheConversation = false
     _.each(newConversationList, conversation => {
         if (conversation.conversationId == conversationId) {
+            conversation.isFetching = isFetching
             hasTheConversation = true
             conversation.history = _.isEmpty(conversation.history) ? [chatItem] : conversation.history?.concat(chatItem)
             return false
@@ -177,6 +186,7 @@ const updateConversationById = ({
         newConversationList.push({
             conversationId,
             history: [chatItem],
+            isFetching,
         })
     }
 

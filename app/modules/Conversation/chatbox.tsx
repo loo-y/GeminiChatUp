@@ -2,6 +2,8 @@
 import React, { useState, ChangeEvent, KeyboardEvent, useRef } from 'react'
 import { Roles } from '@/app/shared/interfaces'
 import _ from 'lodash'
+import { getChatState } from '../../(pages)/chat/slice'
+import { useAppSelector, useAppDispatch } from '@/app/hooks'
 
 const __test_content_list__ = [
     {
@@ -22,6 +24,9 @@ const __test_content_list__ = [
 ]
 
 const Chatbox = () => {
+    const dispatch = useAppDispatch()
+    const state = useAppSelector(getChatState)
+
     return (
         <div className="chatbox flex h-full flex-col overflow-hidden">
             <div className="title h-20 flex border-l border-slate-300 border-solid"></div>

@@ -1,8 +1,5 @@
-import { Chat } from './(pages)/chat/page'
+import ChatPage from './(pages)/chat/page'
+
 export default function Home() {
-    return (
-        <div className="">
-            <Chat serverSideData={null} />
-        </div>
-    )
+    return <ChatPage />
 }

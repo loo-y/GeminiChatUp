@@ -23,12 +23,12 @@ const __test_content_list__ = [
     },
 ]
 
-const Chatbox = () => {
+const ChatBox = () => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
 
     return (
-        <div className="chatbox flex h-full flex-col overflow-hidden">
+        <div className="__chatbox__ flex h-full flex-col overflow-hidden">
             <div className="title h-20 flex border-l border-slate-300 border-solid"></div>
             <div className="flex relative chatinfo h-full rounded-br-lg bg-slate-500">
                 <ChatContent contentList={__test_content_list__} />
@@ -110,4 +110,4 @@ const ChatInput = () => {
         </div>
     )
 }
-export default Chatbox
+export default ChatBox

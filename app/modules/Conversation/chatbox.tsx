@@ -6,6 +6,9 @@ import { getChatState, getGeminiChatAnswer, updateConversation } from '../../(pa
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { IConversation } from '../../(pages)/chat/interface'
 import { IChatItem } from '@/app/shared/interfaces'
+import ReactMarkdown from 'react-markdown'
+import SyntaxHighlighter from 'react-syntax-highlighter'
+import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 
 const __test_conversationId__ = `938373682927348494`
 const __test_content_list__ = [
@@ -44,7 +47,7 @@ const ChatBox = () => {
 
     return (
         <div className="__chatbox__ flex h-full flex-col overflow-hidden">
-            <div className="title h-20 flex border-l border-slate-300 border-solid"></div>
+            <div className="title h-20 flex border-l border-slate-300 border-solid rounded-lg"></div>
             <div className="flex relative chatinfo h-full rounded-br-lg bg-slate-500">
                 <ChatContent contentList={history} />
                 <ChatInput conversation={conversation} />
@@ -61,23 +64,54 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
         return <div className="__chat_content__ flex "></div>
     }
 
-    const roleAiClass = ` justify-start `
-    const roleHumanClass = ` justify-end text-white `
+    const roleAiClass = ` justify-start`,
+        roleHumanClass = ` justify-end `
+    const roleAiInnerClass = ` bg-white `,
+        roleHumanInnerClass = ` bg-lightGreen `
     return (
         <div className="__chat_content__ relative mt-10 mb-36 mx-20 overflow-scroll w-full">
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col gap-6  w-full">
                 {_.map(contentList, (contentItem, index) => {
                     const { role, parts, timsStamp } = contentItem || {}
                     const contentText = parts[0].text
                     return (
                         <div
-                            className={`flex items-center w-full  ${
+                            className={`flex items-center flex-grow  ${
                                 role == Roles.model ? roleAiClass : roleHumanClass
                             }`}
                             key={`__chat_content_item_${index}__`}
                         >
-                            <div className="rounded-xl w-fit bg-lightGeen px-3 py-2">
-                                <span>{contentText}</span>
+                            <div
+                                className={`rounded-xl w-fit px-3 py-2 max-w-[80%] ${
+                                    role == Roles.model ? roleAiInnerClass : roleHumanInnerClass
+                                }`}
+                            >
+                                <ReactMarkdown
+                                    components={{
+                                        code(props) {
+                                            const { children, className, node, ...rest } = props
+                                            const match = /language-(\w+)/.exec(className || '')
+                                            return match ? (
+                                                <div className="text-sm mb-2">
+                                                    {/* @ts-ignore */}
+                                                    <SyntaxHighlighter
+                                                        {...rest}
+                                                        PreTag="div"
+                                                        children={String(children).replace(/\n$/, '')}
+                                                        language={match[1]}
+                                                        style={docco}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <code {...rest} className={className}>
+                                                    {children}
+                                                </code>
+                                            )
+                                        },
+                                    }}
+                                >
+                                    {contentText}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     )
@@ -118,10 +152,23 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
     const handleSendQuestion = () => {
         const { conversationId, isFetching, history } = conversation || {}
         if (!isFetching) {
+            let _history = _.reduce(
+                history,
+                (result: IChatItem[], item: IChatItem) => {
+                    if (result.length === 0 || item.role !== _.last(result)?.role) {
+                        result.push(item)
+                    }
+                    return result
+                },
+                []
+            )
+            if (_.last(_history)?.role === 'user') {
+                _history.pop() // 移除最后一条记录
+            }
             dispatch(
                 getGeminiChatAnswer({
                     conversationId,
-                    history,
+                    history: _history,
                     inputText: inputValue,
                 })
             )
@@ -141,7 +188,7 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
                 className="block flex-grow p-4 bg-white outline-none "
             ></textarea>
             <div
-                className="bg-lightGeen text-white w-20 flex items-center justify-center cursor-pointer"
+                className="bg-lightGreen text-white w-20 flex items-center justify-center cursor-pointer"
                 onClick={handleSendQuestion}
             >
                 Send

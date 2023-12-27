@@ -8,6 +8,7 @@ import { map as _map } from 'lodash'
 import type { AsyncThunk } from '@reduxjs/toolkit'
 import _ from 'lodash'
 import { IChatItem, Roles } from '@/app/shared/interfaces'
+import { geminiChatDb } from '@/app/shared/db'
 
 // define a queue to store api request
 type APIFunc = (typeof API)[keyof typeof API]
@@ -87,7 +88,7 @@ export const getGeminiChatAnswer = createAsyncThunk(
                 chatItem: {
                     role: Roles.user,
                     parts: [{ text: inputText }],
-                    timsStamp: Date.now(),
+                    timestamp: Date.now(),
                 },
                 isFetching: true,
             })
@@ -103,6 +104,9 @@ export const getGeminiChatAnswer = createAsyncThunk(
                 asyncThunk: getGeminiChatAnswer,
             })
         )
+
+        const id = await geminiChatDb.conversations.get(111)
+        console.log(`id`, id)
     }
 )
 
@@ -141,6 +145,7 @@ export const chatSlice = createSlice({
                         chatItem: {
                             role: Roles.model,
                             parts: [{ text }],
+                            timestamp: Date.now(),
                         },
                         isFetching: false,
                     })
@@ -179,8 +184,6 @@ const updateConversationById = ({
             return false
         }
     })
-    // TODO save to local
-    // save to indexedDb
 
     if (!hasTheConversation) {
         newConversationList.push({
@@ -189,6 +192,14 @@ const updateConversationById = ({
             isFetching,
         })
     }
+
+    // save to indexedDb
+    geminiChatDb.chats.add({
+        conversationId,
+        role: chatItem.role,
+        text: chatItem.parts[0].text,
+        timestamp: chatItem.timestamp || Date.now(),
+    })
 
     return newConversationList
 }

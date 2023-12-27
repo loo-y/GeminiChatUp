@@ -20,5 +20,5 @@ export interface IGenerationConfig {
 export interface IChatItem {
     role: Roles
     parts: Record<'text', string>[]
-    timsStamp?: number
+    timestamp?: number
 }

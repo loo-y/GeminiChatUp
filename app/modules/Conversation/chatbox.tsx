@@ -78,13 +78,10 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
     }
 
     return (
-        <div
-            className="__chat_content__ relative mt-10 mb-36 ml-20 mr-[4.5rem] pr-2 overflow-scroll w-full"
-            ref={contentRef}
-        >
+        <div className="__chat_content__ relative mt-10 mb-36 ml-20 mr-16 pr-4 overflow-scroll w-full" ref={contentRef}>
             <div className="flex flex-col gap-6  w-full">
                 {_.map(contentList, (contentItem, index) => {
-                    const { role, parts, timsStamp } = contentItem || {}
+                    const { role, parts, timestamp } = contentItem || {}
                     const contentText = parts[0].text
                     return (
                         <div
@@ -135,9 +132,18 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
 
 const ChatInput = ({ conversation }: { conversation: IConversation }) => {
     const dispatch = useAppDispatch()
+    const [isComposing, setIsComposing] = useState(false)
     const [inputValue, setInputValue] = useState<string>('')
     const [inputRows, setInputRows] = useState<number>(1)
     const inputRef = useRef<HTMLTextAreaElement>(null)
+
+    const handleCompositionStart = () => {
+        setIsComposing(true)
+    }
+
+    const handleCompositionEnd = () => {
+        setIsComposing(false)
+    }
 
     const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setInputValue(event.target.value)
@@ -156,8 +162,10 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
             const newSelectionStart = selectionStart + 1
             event.currentTarget.setSelectionRange(newSelectionStart, newSelectionStart)
         } else if (event.key === 'Enter') {
-            event.preventDefault()
-            handleSendQuestion()
+            if (!isComposing) {
+                event.preventDefault()
+                handleSendQuestion()
+            }
         }
     }
 
@@ -197,6 +205,8 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
                 onKeyDown={handleKeyDown}
                 rows={inputRows}
                 style={{ resize: 'none' }}
+                onCompositionStart={handleCompositionStart}
+                onCompositionEnd={handleCompositionEnd}
                 className="block flex-grow p-4 bg-white outline-none "
             ></textarea>
             <div

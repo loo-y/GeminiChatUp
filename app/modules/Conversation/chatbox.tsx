@@ -7,17 +7,17 @@ import { useAppSelector, useAppDispatch } from '@/app/hooks'
 
 const __test_content_list__ = [
     {
-        role: Roles.Human,
+        role: Roles.user,
         contentText: `你好`,
         timestamp: Date.now() - 1000 * 20,
     },
     {
-        role: Roles.AI,
+        role: Roles.model,
         contentText: `你好`,
         timestamp: Date.now() - 1000 * 20,
     },
     {
-        role: Roles.Human,
+        role: Roles.user,
         contentText: `你好`,
         timestamp: Date.now() - 1000 * 20,
     },
@@ -55,7 +55,9 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                     const { role, contentText } = contentItem || {}
                     return (
                         <div
-                            className={`flex items-center w-full  ${role == Roles.AI ? roleAiClass : roleHumanClass}`}
+                            className={`flex items-center w-full  ${
+                                role == Roles.model ? roleAiClass : roleHumanClass
+                            }`}
                             key={`__chat_content_item_${index}__`}
                         >
                             <div className="rounded-xl w-fit bg-lightGeen px-3 py-2">

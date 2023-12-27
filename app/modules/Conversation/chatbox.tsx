@@ -1,10 +1,13 @@
 'use client'
-import React, { useState, ChangeEvent, KeyboardEvent, useRef } from 'react'
+import React, { useState, ChangeEvent, KeyboardEvent, useRef, useMemo } from 'react'
 import { Roles } from '@/app/shared/interfaces'
 import _ from 'lodash'
-import { getChatState } from '../../(pages)/chat/slice'
+import { getChatState, getGeminiChatAnswer, updateConversation } from '../../(pages)/chat/slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
+import { IConversation } from '../../(pages)/chat/interface'
+import { IChatItem } from '@/app/shared/interfaces'
 
+const __test_conversationId__ = `938373682927348494`
 const __test_content_list__ = [
     {
         role: Roles.user,
@@ -26,20 +29,32 @@ const __test_content_list__ = [
 const ChatBox = () => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
+    const conversation = useMemo((): IConversation => {
+        return (
+            _.find(state.conversationList, conversation => {
+                return conversation.conversationId == __test_conversationId__
+            }) || {
+                conversationId: __test_conversationId__,
+                history: [],
+            }
+        )
+    }, [state.conversationList])
+
+    const { history, conversationId } = conversation || {}
 
     return (
         <div className="__chatbox__ flex h-full flex-col overflow-hidden">
             <div className="title h-20 flex border-l border-slate-300 border-solid"></div>
             <div className="flex relative chatinfo h-full rounded-br-lg bg-slate-500">
-                <ChatContent contentList={__test_content_list__} />
-                <ChatInput />
+                <ChatContent contentList={history} />
+                <ChatInput conversation={conversation} />
             </div>
         </div>
     )
 }
 
 interface IChatContentProps {
-    contentList?: { role: Roles; contentText: string; timestamp: number }[]
+    contentList?: IChatItem[]
 }
 const ChatContent = ({ contentList }: IChatContentProps) => {
     if (_.isEmpty(contentList)) {
@@ -52,7 +67,8 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
         <div className="__chat_content__ relative mt-10 mb-36 mx-20 overflow-scroll w-full">
             <div className="flex flex-col gap-2 w-full">
                 {_.map(contentList, (contentItem, index) => {
-                    const { role, contentText } = contentItem || {}
+                    const { role, parts, timsStamp } = contentItem || {}
+                    const contentText = parts[0].text
                     return (
                         <div
                             className={`flex items-center w-full  ${
@@ -71,7 +87,8 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
     )
 }
 
-const ChatInput = () => {
+const ChatInput = ({ conversation }: { conversation: IConversation }) => {
+    const dispatch = useAppDispatch()
     const [inputValue, setInputValue] = useState<string>('')
     const [inputRows, setInputRows] = useState<number>(1)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -94,6 +111,21 @@ const ChatInput = () => {
             event.currentTarget.setSelectionRange(newSelectionStart, newSelectionStart)
         } else if (event.key === 'Enter') {
             event.preventDefault()
+            handleSendQuestion()
+        }
+    }
+
+    const handleSendQuestion = () => {
+        const { conversationId, isFetching, history } = conversation || {}
+        if (!isFetching) {
+            dispatch(
+                getGeminiChatAnswer({
+                    conversationId,
+                    history,
+                    inputText: inputValue,
+                })
+            )
+            setInputValue('')
         }
     }
 
@@ -108,7 +140,12 @@ const ChatInput = () => {
                 style={{ resize: 'none' }}
                 className="block flex-grow p-4 bg-white outline-none "
             ></textarea>
-            <div className="bg-lightGeen text-white w-20 flex items-center justify-center cursor-pointer">Send</div>
+            <div
+                className="bg-lightGeen text-white w-20 flex items-center justify-center cursor-pointer"
+                onClick={handleSendQuestion}
+            >
+                Send
+            </div>
         </div>
     )
 }

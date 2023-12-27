@@ -1,4 +1,6 @@
 import _ from 'lodash'
+import { IChatItem } from '../shared/interfaces'
+import { fetchTimeout } from './utils'
 
 const commonOptions = {
     method: 'POST',
@@ -7,13 +9,36 @@ const commonOptions = {
     },
 }
 
-export const fetchCount = async ({ count }: { count: number }) => {
-    const response = await fetch('/api/count', {
-        ...commonOptions,
-        body: JSON.stringify({ count }),
-    })
-    if (!response.ok) {
-        throw new Error(response.statusText)
+export const fetchGeminiChat = async ({
+    history,
+    inputText,
+    conversationId,
+}: {
+    history?: IChatItem[]
+    inputText: string
+    conversationId: string
+}) => {
+    const jsonBody = {
+        history,
+        inputText,
     }
-    return await response.json()
+    let result = {}
+    try {
+        const response = await Promise.race([
+            fetch('/api/geminichat', {
+                ...commonOptions,
+                body: JSON.stringify({ ...jsonBody }),
+            }),
+            fetchTimeout(10),
+        ])
+        if (response instanceof Response) {
+            result = await response.json()
+        } else {
+            console.log(`race failed`)
+        }
+    } catch (e) {
+        console.log(`fetchGeminiChat error`, e)
+    }
+
+    return { ...result, conversationId }
 }

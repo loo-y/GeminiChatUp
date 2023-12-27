@@ -53,7 +53,7 @@ const GeminiChat = async ({ generationConfig, safetySettings, history, inputText
             error,
         }
 
-    let params = {
+    let params: Partial<IGeminiChatProps> = {
         generationConfig: {
             ...defaultGenerationConfig,
             ...generationConfig,
@@ -68,7 +68,12 @@ const GeminiChat = async ({ generationConfig, safetySettings, history, inputText
                       threshold: newSS?.threshold || ss.threshold,
                   }
               }),
-        history,
+        history: _.map(history, h => {
+            return {
+                role: h.role,
+                parts: h.parts,
+            }
+        }),
     }
     if (_.isEmpty(history)) {
         delete params.history
@@ -76,6 +81,20 @@ const GeminiChat = async ({ generationConfig, safetySettings, history, inputText
 
     try {
         const chat = model.startChat(params)
+        if (isStream) {
+            const streamResult = await chat.sendMessageStream(inputText)
+            let text = ''
+            for await (const chunk of streamResult.stream) {
+                const chunkText = chunk.text()
+                console.log(chunkText)
+                text += chunkText
+            }
+
+            return {
+                status: true,
+                text,
+            }
+        }
         const result = await chat.sendMessage(inputText)
         const response = result.response
         return {

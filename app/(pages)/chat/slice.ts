@@ -1,12 +1,13 @@
 import { createAsyncThunk, createSlice, original, PayloadAction } from '@reduxjs/toolkit'
 import type { AppState, AppThunk } from '@/app/store'
 import * as API from '@/app/shared/API'
-import { fetchCount } from '@/app/shared/API'
+import { fetchGeminiChat } from '@/app/shared/API'
 import { ChatState } from './interface'
 // import _ from 'lodash' // use specific function from lodash
 import { map as _map } from 'lodash'
 import type { AsyncThunk } from '@reduxjs/toolkit'
 import _ from 'lodash'
+import { IChatItem, Roles } from '@/app/shared/interfaces'
 
 // define a queue to store api request
 type APIFunc = (typeof API)[keyof typeof API]
@@ -15,6 +16,7 @@ export const getChatState = (state: AppState): ChatState => state.chatStore
 
 const initialState: ChatState & Record<string, any> = {
     requestInQueueFetching: false,
+    conversationList: [],
 }
 
 type RequestCombo = {
@@ -72,16 +74,32 @@ const makeApiRequestInQueue = createAsyncThunk(
     }
 )
 
-export const getCounts = createAsyncThunk(
-    'chatSlice/getCounts',
-    async (params: Record<string, any> = {}, { dispatch, getState }: any) => {
+export const getGeminiChatAnswer = createAsyncThunk(
+    'chatSlice/getGeminiChatAnswer',
+    async (
+        { history, inputText, conversationId }: { history?: IChatItem[]; inputText: string; conversationId: string },
+        { dispatch, getState }: any
+    ) => {
         const chatState: ChatState = getChatState(getState())
         dispatch(
+            updateConversation({
+                conversationId,
+                chatItem: {
+                    role: Roles.user,
+                    parts: [{ text: inputText }],
+                    timsStamp: Date.now(),
+                },
+            })
+        )
+
+        dispatch(
             makeApiRequestInQueue({
-                apiRequest: fetchCount.bind(null, {
-                    count: params.count,
+                apiRequest: fetchGeminiChat.bind(null, {
+                    history,
+                    inputText,
+                    conversationId,
                 }),
-                asyncThunk: getCounts,
+                asyncThunk: getGeminiChatAnswer,
             })
         )
     }
@@ -97,12 +115,31 @@ export const chatSlice = createSlice({
         updateState: (state, action: PayloadAction<Partial<ChatState>>) => {
             return { ...state, ...action.payload }
         },
+        updateConversation: (state, action: PayloadAction<{ conversationId: string; chatItem: IChatItem }>) => {
+            const { conversationId, chatItem } = action.payload || {}
+            let conversationList = _.clone(state.conversationList)
+            state.conversationList = updateConversationById({
+                conversationId,
+                conversationList,
+                chatItem,
+            })
+        },
     },
     extraReducers: builder => {
-        builder.addCase(getCounts.fulfilled, (state, action) => {
+        builder.addCase(getGeminiChatAnswer.fulfilled, (state, action) => {
             if (action.payload as any) {
-                const { status, data } = (action.payload as any) || {}
-                state.counts = (status && !_.isEmpty(data?.counts) && data.counts) || []
+                const { status, text, conversationId } = (action.payload as any) || {}
+                if (status && text && conversationId) {
+                    const conversationList = updateConversationById({
+                        conversationId,
+                        conversationList: state.conversationList,
+                        chatItem: {
+                            role: Roles.model,
+                            parts: [{ text }],
+                        },
+                    })
+                    state.conversationList = conversationList
+                }
             } else {
                 return { ...state }
             }
@@ -111,5 +148,37 @@ export const chatSlice = createSlice({
 })
 
 // export actions
-export const { updateState } = chatSlice.actions
+export const { updateState, updateConversation } = chatSlice.actions
 export default chatSlice.reducer
+
+// ********** helper **********
+const updateConversationById = ({
+    conversationId,
+    chatItem,
+    conversationList,
+}: {
+    conversationId: string
+    chatItem: IChatItem
+    conversationList: ChatState['conversationList']
+}) => {
+    const newConversationList = _.clone(conversationList)
+    let hasTheConversation = false
+    _.each(newConversationList, conversation => {
+        if (conversation.conversationId == conversationId) {
+            hasTheConversation = true
+            conversation.history = _.isEmpty(conversation.history) ? [chatItem] : conversation.history?.concat(chatItem)
+            return false
+        }
+    })
+    // TODO save to local
+    // save to indexedDb
+
+    if (!hasTheConversation) {
+        newConversationList.push({
+            conversationId,
+            history: [chatItem],
+        })
+    }
+
+    return newConversationList
+}

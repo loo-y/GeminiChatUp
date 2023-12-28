@@ -12,7 +12,7 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     return (
-        <main className="main bg-slate-500">
+        <main className="main ">
             <div className="chat-container min-w-[66vw] max-w-[80vw] h-[80vh] bg-slate-100 shadow-2xl mx-auto my-[10vh] rounded-lg flex flex-row border border-slate-50 border-solid">
                 <div className="left-side w-1/5 h-full ">
                     <ChatList />

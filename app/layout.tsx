@@ -6,6 +6,10 @@ export const metadata: Metadata = {
     description: 'Gemini Chat Messenger',
 }
 
+export const viewport = {
+  themeColor: 'light',
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">

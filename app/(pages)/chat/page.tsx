@@ -18,8 +18,8 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
     console.log(`Chat`, state)
     return (
         <main className="main h-screen overflow-hidden ">
-            <div className="chat-container m-0 bg-slate-100 shadow-2xl h-[100vh]  rounded-lg flex flex-row">
-                <div className="left-side hidden md:block flex-none w-1/5 h-full max-w-[25rem]">
+            <div className="chat-container m-0 bg-white shadow-2xl h-[100vh]  flex flex-row">
+                <div className="left-side hidden md:block flex-none w-1/5 h-full max-w-[25rem] border-r border-[#eee] border-solid">
                     <ChatList />
                 </div>
                 <div className="right-side flex-grow h-full">

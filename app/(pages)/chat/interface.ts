@@ -19,6 +19,7 @@ export interface IConversation
     history?: IChatItem[]
     isSelected?: boolean
     isFetching?: boolean
+    modelAvatar?: string
 }
 
 export interface ChatState {

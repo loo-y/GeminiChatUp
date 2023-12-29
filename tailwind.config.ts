@@ -15,7 +15,9 @@ const config: Config = {
       },
       colors: {
         lightGreen: 'rgb(95,206,114)',
-        lightWhite: '#F4F4F7'
+        lightWhite: '#F4F4F7',
+        textBlackColor: 'rgba(0,0,0,0.7)',
+        textGrayColor: 'rgba(0, 0, 0, 0.45)',
       }
     },
   },

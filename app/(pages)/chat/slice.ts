@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, original, PayloadAction } from '@reduxjs
 import type { AppState, AppThunk } from '@/app/store'
 import * as API from '@/app/shared/API'
 import { fetchGeminiChat } from '@/app/shared/API'
-import { ChatState } from './interface'
+import { ChatState, IConversation } from './interface'
 // import _ from 'lodash' // use specific function from lodash
 import { map as _map } from 'lodash'
 import type { AsyncThunk } from '@reduxjs/toolkit'
@@ -21,6 +21,8 @@ const initialState: ChatState & Record<string, any> = {
     requestInQueueFetching: false,
     conversationList: [],
 }
+
+const __avatar__ = [`animal001`, `animal002`, `animal003`, `animal004`, `animal005`, `animal006`]
 
 type RequestCombo = {
     apiRequest: APIFunc
@@ -126,6 +128,18 @@ export const initialConversationListInState = createAsyncThunk(
     }
 )
 
+export const createNewConversationInState = createAsyncThunk(
+    'chatSlice/createNewConversationInState',
+    async (params, { dispatch, getState }: any) => {
+        const chatState: ChatState = getChatState(getState())
+        const conversationList = await createNewConversation(chatState.conversationList)
+        dispatch(
+            updateState({
+                conversationList: conversationList,
+            })
+        )
+    }
+)
 export const chatSlice = createSlice({
     name: 'chatSlice',
     initialState,
@@ -234,7 +248,6 @@ const updateConversationById = ({
 // initialConversionList from db
 export const initialConversionList = async () => {
     let conversationList = await geminiChatDb.conversations.toArray()
-
     // if it is empty, create one
     if (_.isEmpty(conversationList)) {
         const newConversationItem = {
@@ -248,6 +261,7 @@ export const initialConversionList = async () => {
             hateSpeech: HarmBlockThreshold.BLOCK_NONE,
             sexuallyExplicit: HarmBlockThreshold.BLOCK_NONE,
             dangerousContent: HarmBlockThreshold.BLOCK_NONE,
+            modelAvatar: `/avatars/${__avatar__[Math.floor(Math.random() * 6)]}.png`,
         }
 
         await geminiChatDb.conversations.add(newConversationItem)
@@ -272,9 +286,43 @@ export const initialConversionList = async () => {
 
         return {
             ...c,
-            isSelected: true,
             isFetching: false,
             history: xhistory,
         }
     })
+}
+
+export const createNewConversation = async (conversationList?: IConversation[]) => {
+    conversationList = conversationList || (await geminiChatDb.conversations.toArray())
+    const newConversationItem = {
+        conversationId: generateReversibleToken(),
+        conversationName: 'untitled conversation',
+        topK: 1,
+        temperature: 0.9,
+        topP: 1,
+        maxOutputTokens: 2048,
+        harassment: HarmBlockThreshold.BLOCK_NONE,
+        hateSpeech: HarmBlockThreshold.BLOCK_NONE,
+        sexuallyExplicit: HarmBlockThreshold.BLOCK_NONE,
+        dangerousContent: HarmBlockThreshold.BLOCK_NONE,
+        modelAvatar: `/avatars/${__avatar__[Math.floor(Math.random() * 6)]}.png`,
+        isSelected: true,
+    }
+
+    geminiChatDb
+        .transaction('rw', geminiChatDb.conversations.name, async () => {
+            await geminiChatDb.conversations.toCollection().each(async item => {
+                item.isSelected = false
+                await geminiChatDb.conversations.put(item)
+            })
+        })
+        .catch(error => {
+            console.error('Error updating data:', error)
+        })
+
+    await geminiChatDb.conversations.add(newConversationItem)
+
+    return _.map(conversationList, c => {
+        return { ...c, isSelected: false }
+    }).concat([{ ...newConversationItem }])
 }

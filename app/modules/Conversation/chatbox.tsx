@@ -28,8 +28,8 @@ const ChatBox = () => {
 
     return (
         <div className="__chatbox__ flex flex-col h-screen text-stone-900 bg-[#fafafa]">
-            <div className="flex-none title h-16 flex border-l border-b border-[#EEE] border-solid rounded-tr-lg bg-white"></div>
-            <div className="flex flex-grow overflow-auto relative chatinfo rounded-br-lg md:ml-20 md:mr-16 ml-4 mr-0">
+            <div className="flex-none title h-16 flex border-b border-[#EEE] border-solid rounded-tr-lg bg-white"></div>
+            <div className="flex flex-grow overflow-auto relative chatinfo rounded-br-lg md:ml-12 md:mr-8 ml-4 mr-0">
                 <ChatContent contentList={history} />
                 <ChatInput conversation={conversation} />
             </div>
@@ -60,7 +60,7 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
 
     return (
         <div
-            className="__chat_content__ relative mt-4 mb-32 pr-4 overflow-scroll w-full text-[rgba(0,0,0,0.7)] leading-relaxed"
+            className="__chat_content__ relative mt-4 mb-32 pr-4 overflow-scroll w-full text-textBlackColor leading-relaxed"
             ref={contentRef}
         >
             <div className="flex flex-col gap-6  w-full ">
@@ -192,7 +192,7 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
     }
 
     return (
-        <div className="__chat_input__ absolute bottom-10 left-0 right-4 max-h-[7.5rem] overflow-scroll rounded-lg flex flex-row bg-white">
+        <div className="__chat_input__ absolute bottom-10 left-0 right-4 max-h-[7.5rem] overflow-scroll rounded-lg flex flex-row bg-white border-[#eee] border border-r-0 border-solid">
             <textarea
                 value={inputValue}
                 ref={inputRef}

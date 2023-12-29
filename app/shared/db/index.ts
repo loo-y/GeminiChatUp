@@ -13,6 +13,8 @@ export interface Conversation {
     hateSpeech: HarmBlockThreshold
     sexuallyExplicit: HarmBlockThreshold
     dangerousContent: HarmBlockThreshold
+    modelAvatar?: string
+    isSelected?: boolean
 }
 
 interface ChatItem {
@@ -34,7 +36,7 @@ export class IndexedDexie extends Dexie {
         super(dbname)
         this.version(1).stores({
             conversations:
-                '++id, conversationId, conversationName, topK, topP, maxOutputTokens, temperature, harassment, hateSpeech, sexuallyExplicit, dangerousContent', // Primary key and indexed props
+                '++id, conversationId, conversationName, topK, topP, maxOutputTokens, temperature, harassment, hateSpeech, sexuallyExplicit, dangerousContent, modelAvatar, isSelected', // Primary key and indexed props
             chats: '++id, conversationId, role, text, timestamp',
         })
     }

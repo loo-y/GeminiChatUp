@@ -15,9 +15,9 @@ const ChatList = () => {
         dispatch(createNewConversationInState())
     }
     return (
-        <div className="__chatlist__ flex w-full mt-4">
+        <div className="__chatlist__ flex w-full mt-0">
             <div className="__chatlist_topsetting__ w-full flex flex-col text-textBlackColor">
-                <div className="flex flex-row mx-4 gap-4">
+                <div className="flex flex-row mx-4 gap-4 h-16 items-center">
                     <div className="__add_new_chat__ flex items-center mx-[0.5px] active:mr-[-.05px]">
                         <img
                             src={'/images/plus.svg'}
@@ -66,9 +66,9 @@ const ConversationList = () => {
         )
     }
     return (
-        <div className="__conversationlist__ flex flex-col mt-6 gap-3">
+        <div className="__conversationlist__ flex flex-col mt-3 gap-3">
             {_.map(conversationList, (theConversation, conversationIndex) => {
-                const { conversationName, history, isSelected, modelAvatar } = theConversation || {}
+                const { conversationName, history, isSelected, modelAvatar, isFetching } = theConversation || {}
                 const lastChatItem: IChatItem | undefined = history && history[history.length - 1]
                 const lastText = lastChatItem?.parts?.[0]?.text
                 const isUser = lastChatItem?.role == Roles.user
@@ -85,18 +85,20 @@ const ConversationList = () => {
                     >
                         <div className="__conersation_avatar__ flex items-center justify-start">
                             {modelAvatar ? (
-                                <div className="h-10 w-10 rounded-full">
-                                    <img src={modelAvatar} />
+                                <div className="flex items-center justify-center h-11 w-11 rounded-full bg-gray-300">
+                                    <img src={modelAvatar} className="h-10 w-10 overflow-hidden" />
                                 </div>
                             ) : null}
                         </div>
-                        <div className="flex flex-col gap-1 line-clamp-1 mr-3">
-                            <div className="">{conversationName}</div>
-                            {lastText ? (
+                        <div className="flex flex-col gap-1 mr-3">
+                            <div className=" line-clamp-1">{conversationName}</div>
+                            {lastText && !isFetching ? (
                                 <div className="text-textGrayColor text-sm line-clamp-1">
                                     {isUser ? 'You: ' : ''}
-                                    {lastText}
+                                    {lastText.substring(0, 50)}
                                 </div>
+                            ) : isFetching ? (
+                                <div className="text-lightGreen text-sm line-clamp-1">{`is typing...`}</div>
                             ) : null}
                         </div>
                         <div className="__conersation_updatetime__ flex items-center justify-end flex-grow text-xs text-stone-500">

@@ -24,11 +24,34 @@ const ChatBox = () => {
     }, [state.conversationList])
 
     console.log(`the conversation`, conversation)
-    const { history, conversationId } = conversation || {}
+    const { history, conversationId, modelAvatar, conversationName, isFetching } = conversation || {}
 
     return (
         <div className="__chatbox__ flex flex-col h-screen text-stone-900 bg-[#fafafa]">
-            <div className="flex-none title h-16 flex border-b border-[#EEE] border-solid rounded-tr-lg bg-white"></div>
+            <div className="flex-none title h-16 flex border-b border-[#eee] border-solid rounded-tr-lg bg-white">
+                <div className=" flex flex-row items-center ml-4 w-full">
+                    <div className="flex-none flex-row flex w-1/2 items-center gap-4">
+                        <div className="__conversation_avatar__ flex h-[3.25rem] w-[3.25rem] items-center justify-center bg-stone-300 rounded-full">
+                            <img src={modelAvatar} className="h-12 w-12" />
+                        </div>
+                        <div className="flex flex-col">
+                            <div className="__conversation_name__ flex font-bold">
+                                <span>{conversationName}</span>
+                            </div>
+                            {isFetching ? (
+                                <div className="__conversation_status__ flex text-sm text-lightGreen">
+                                    <span>{`is typing...`}</span>
+                                </div>
+                            ) : null}
+                        </div>
+                    </div>
+                    <div className=" flex flex-grow items-center justify-end mr-4">
+                        <div className="svg-image flex h-7 w-7 overflow-hidden items-center justify-center cursor-pointer">
+                            <img src={'/images/settings.svg'} className="h-6 w-6 active:mt-[0.5px] active:ml-[0.5px]" />
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div className="flex flex-grow overflow-auto relative chatinfo rounded-br-lg md:ml-12 md:mr-8 ml-4 mr-0">
                 <ChatContent contentList={history} />
                 <ChatInput conversation={conversation} />

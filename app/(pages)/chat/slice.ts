@@ -166,32 +166,28 @@ export const chatSlice = createSlice({
     },
     extraReducers: builder => {
         builder.addCase(getGeminiChatAnswer.fulfilled, (state, action) => {
-            if (action.payload as any) {
-                const { status, text, conversationId } = (action.payload as any) || {}
-                let conversationList
-                if (status && text && conversationId) {
-                    conversationList = updateConversationById({
+            const { status, text, conversationId } = (action.payload as any) || {}
+            let conversationList
+            if (status && text && conversationId) {
+                conversationList = updateConversationById({
+                    conversationId,
+                    conversationList: state.conversationList,
+                    chatItem: {
                         conversationId,
-                        conversationList: state.conversationList,
-                        chatItem: {
-                            conversationId,
-                            role: Roles.model,
-                            parts: [{ text }],
-                            timestamp: Date.now(),
-                        },
-                        isFetching: false,
-                    })
-                } else {
-                    conversationList = updateConversationById({
-                        conversationId,
-                        conversationList: state.conversationList,
-                        isFetching: false,
-                    })
-                }
-                state.conversationList = conversationList
+                        role: Roles.model,
+                        parts: [{ text }],
+                        timestamp: Date.now(),
+                    },
+                    isFetching: false,
+                })
             } else {
-                return { ...state }
+                conversationList = updateConversationById({
+                    conversationId,
+                    conversationList: state.conversationList,
+                    isFetching: false,
+                })
             }
+            state.conversationList = conversationList
         })
     },
 })

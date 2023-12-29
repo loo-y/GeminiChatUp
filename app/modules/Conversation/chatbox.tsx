@@ -9,6 +9,7 @@ import { IChatItem } from '@/app/shared/interfaces'
 import ReactMarkdown from 'react-markdown'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
+import { formatDate } from '@/app/shared/utils'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -25,9 +26,9 @@ const ChatBox = () => {
     const { history, conversationId } = conversation || {}
 
     return (
-        <div className="__chatbox__ flex h-full flex-col ">
-            <div className="title h-20 flex border-l border-slate-300 border-solid rounded-tr-lg"></div>
-            <div className="flex relative chatinfo h-full rounded-br-lg bg-slate-500 overflow-hidden">
+        <div className="__chatbox__ flex h-full flex-col text-stone-900 bg-[#fafafa]">
+            <div className="title h-20 flex border-l border-b border-[#EEE] border-solid rounded-tr-lg bg-white"></div>
+            <div className="flex relative chatinfo h-full rounded-br-lg overflow-hidden">
                 <ChatContent contentList={history} />
                 <ChatInput conversation={conversation} />
             </div>
@@ -49,15 +50,18 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
 
     const roleAiClass = ` justify-start`,
         roleHumanClass = ` justify-end `
-    const roleAiInnerClass = ` bg-white `,
-        roleHumanInnerClass = ` bg-lightGreen `
+    const roleAiInnerClass = ` bg-lightWhite `,
+        roleHumanInnerClass = ` bg-lightWhite `
 
     if (_.isEmpty(contentList)) {
         return <div className="__chat_content__ flex "></div>
     }
 
     return (
-        <div className="__chat_content__ relative mt-10 mb-36 ml-20 mr-16 pr-4 overflow-scroll w-full" ref={contentRef}>
+        <div
+            className="__chat_content__ relative mt-4 mb-32 ml-20 mr-16 pr-4 overflow-scroll w-full text-[rgba(0,0,0,0.7)] leading-relaxed"
+            ref={contentRef}
+        >
             <div className="flex flex-col gap-6  w-full">
                 {_.map(contentList, (contentItem, index) => {
                     const { role, parts, timestamp } = contentItem || {}
@@ -70,7 +74,7 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                             key={`__chat_content_item_${index}__`}
                         >
                             <div
-                                className={`rounded-xl w-fit px-3 py-2 max-w-[80%] ${
+                                className={`rounded-xl flex flex-col w-fit px-3 py-2 max-w-[80%] gap-1 ${
                                     role == Roles.model ? roleAiInnerClass : roleHumanInnerClass
                                 }`}
                             >
@@ -101,6 +105,13 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                                 >
                                     {contentText}
                                 </ReactMarkdown>
+                                <div
+                                    className={`flex __timestamp__ text-stone-400 text-xs ${
+                                        role == Roles.model ? roleAiClass : roleHumanClass
+                                    }`}
+                                >
+                                    {formatDate(timestamp)}
+                                </div>
                             </div>
                         </div>
                     )
@@ -189,6 +200,7 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
                 onCompositionStart={handleCompositionStart}
                 onCompositionEnd={handleCompositionEnd}
                 className="block flex-grow p-4 bg-white outline-none "
+                placeholder="Type your messeage here..."
             ></textarea>
             <div
                 className="bg-lightGreen text-white w-20 flex items-center justify-center cursor-pointer"

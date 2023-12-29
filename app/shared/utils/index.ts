@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 export const sleep = (sec: number) =>
     new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -16,4 +17,11 @@ export const generateReversibleToken = (): string => {
     const reversedTimestamp = timestamp.split('').reverse().join('')
     const token = parseInt(reversedTimestamp).toString(16)
     return token.padStart(16, '0')
+}
+
+export const formatDate = (timestamp?: number, format = 'HH:mm') => {
+    if (timestamp && dayjs(timestamp).isValid()) {
+        return dayjs(timestamp).format(format)
+    }
+    return timestamp
 }

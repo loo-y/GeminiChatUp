@@ -17,7 +17,7 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
     }, [])
     console.log(`Chat`, state)
     return (
-        <main className="main ">
+        <main className="main h-screen overflow-hidden ">
             <div className="chat-container m-0 bg-slate-100 shadow-2xl h-[100vh]  rounded-lg flex flex-row">
                 <div className="left-side hidden md:block flex-none w-1/5 h-full max-w-[25rem]">
                     <ChatList />

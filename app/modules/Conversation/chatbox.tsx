@@ -9,6 +9,7 @@ import { IChatItem } from '@/app/shared/interfaces'
 import ReactMarkdown from 'react-markdown'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
+import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { formatDate } from '@/app/shared/utils'
 
 const ChatBox = () => {
@@ -26,9 +27,9 @@ const ChatBox = () => {
     const { history, conversationId } = conversation || {}
 
     return (
-        <div className="__chatbox__ flex h-full flex-col text-stone-900 bg-[#fafafa]">
-            <div className="title h-20 flex border-l border-b border-[#EEE] border-solid rounded-tr-lg bg-white"></div>
-            <div className="flex relative chatinfo h-full rounded-br-lg overflow-hidden">
+        <div className="__chatbox__ flex flex-col h-screen text-stone-900 bg-[#fafafa]">
+            <div className="flex-none title h-16 flex border-l border-b border-[#EEE] border-solid rounded-tr-lg bg-white"></div>
+            <div className="flex flex-grow overflow-auto relative chatinfo rounded-br-lg md:ml-20 md:mr-16 ml-4 mr-0">
                 <ChatContent contentList={history} />
                 <ChatInput conversation={conversation} />
             </div>
@@ -59,10 +60,10 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
 
     return (
         <div
-            className="__chat_content__ relative mt-4 mb-32 ml-20 mr-16 pr-4 overflow-scroll w-full text-[rgba(0,0,0,0.7)] leading-relaxed"
+            className="__chat_content__ relative mt-4 mb-32 pr-4 overflow-scroll w-full text-[rgba(0,0,0,0.7)] leading-relaxed"
             ref={contentRef}
         >
-            <div className="flex flex-col gap-6  w-full">
+            <div className="flex flex-col gap-6  w-full ">
                 {_.map(contentList, (contentItem, index) => {
                     const { role, parts, timestamp } = contentItem || {}
                     const contentText = parts[0].text
@@ -74,7 +75,7 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                             key={`__chat_content_item_${index}__`}
                         >
                             <div
-                                className={`rounded-xl flex flex-col w-fit px-3 py-2 max-w-[80%] gap-1 ${
+                                className={`rounded-xl flex flex-col px-3 py-2 w-fit  max-w-[80%] gap-1 ${
                                     role == Roles.model ? roleAiInnerClass : roleHumanInnerClass
                                 }`}
                             >
@@ -84,10 +85,12 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                                             const { children, className, node, ...rest } = props
                                             const match = /language-(\w+)/.exec(className || '')
                                             return match ? (
-                                                <div className="text-sm mb-2">
+                                                <div className="text-sm mb-2 ">
                                                     {/* @ts-ignore */}
                                                     <SyntaxHighlighter
                                                         {...rest}
+                                                        wrapLines={true}
+                                                        wrapLongLines={true}
                                                         PreTag="div"
                                                         language={match[1]}
                                                         style={docco}
@@ -189,7 +192,7 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
     }
 
     return (
-        <div className="__chat_input__ absolute bottom-10 left-20 right-20 max-h-[7.5rem] overflow-scroll rounded-lg flex flex-row bg-white">
+        <div className="__chat_input__ absolute bottom-10 left-0 right-4 max-h-[7.5rem] overflow-scroll rounded-lg flex flex-row bg-white">
             <textarea
                 value={inputValue}
                 ref={inputRef}

@@ -10,39 +10,18 @@ import ReactMarkdown from 'react-markdown'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 
-const __test_conversationId__ = `938373682927348494`
-const __test_content_list__ = [
-    {
-        role: Roles.user,
-        contentText: `你好`,
-        timestamp: Date.now() - 1000 * 20,
-    },
-    {
-        role: Roles.model,
-        contentText: `你好`,
-        timestamp: Date.now() - 1000 * 20,
-    },
-    {
-        role: Roles.user,
-        contentText: `你好`,
-        timestamp: Date.now() - 1000 * 20,
-    },
-]
-
 const ChatBox = () => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     const conversation = useMemo((): IConversation => {
         return (
             _.find(state.conversationList, conversation => {
-                return conversation.conversationId == __test_conversationId__
-            }) || {
-                conversationId: __test_conversationId__,
-                history: [],
-            }
+                return conversation.isSelected == true
+            }) || state.conversationList[0]
         )
     }, [state.conversationList])
 
+    console.log(`the conversation`, conversation)
     const { history, conversationId } = conversation || {}
 
     return (
@@ -106,10 +85,11 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                                                     <SyntaxHighlighter
                                                         {...rest}
                                                         PreTag="div"
-                                                        children={String(children).replace(/\n$/, '')}
                                                         language={match[1]}
                                                         style={docco}
-                                                    />
+                                                    >
+                                                        {String(children).replace(/\n$/, '')}
+                                                    </SyntaxHighlighter>
                                                 </div>
                                             ) : (
                                                 <code {...rest} className={className}>
@@ -171,6 +151,7 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
 
     const handleSendQuestion = () => {
         const { conversationId, isFetching, history } = conversation || {}
+        console.log(`conversation`, conversation)
         if (!isFetching) {
             let _history = _.reduce(
                 history,

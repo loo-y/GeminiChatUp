@@ -1,7 +1,7 @@
 import Dexie, { Table } from 'dexie'
 import { Roles } from '../interfaces'
 import { HarmBlockThreshold } from '@google/generative-ai'
-interface Conversation {
+export interface Conversation {
     id?: number
     conversationId: string
     conversationName: string

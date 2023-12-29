@@ -9,6 +9,8 @@ import type { AsyncThunk } from '@reduxjs/toolkit'
 import _ from 'lodash'
 import { IChatItem, Roles } from '@/app/shared/interfaces'
 import { geminiChatDb } from '@/app/shared/db'
+import { HarmBlockThreshold } from '@google/generative-ai'
+import { generateReversibleToken } from '@/app/shared/utils'
 
 // define a queue to store api request
 type APIFunc = (typeof API)[keyof typeof API]
@@ -86,6 +88,7 @@ export const getGeminiChatAnswer = createAsyncThunk(
             updateConversation({
                 conversationId,
                 chatItem: {
+                    conversationId,
                     role: Roles.user,
                     parts: [{ text: inputText }],
                     timestamp: Date.now(),
@@ -107,6 +110,19 @@ export const getGeminiChatAnswer = createAsyncThunk(
 
         const id = await geminiChatDb.conversations.get(111)
         console.log(`id`, id)
+    }
+)
+
+export const initialConversationListInState = createAsyncThunk(
+    'chatSlice/initialConversationListInState',
+    async (params, { dispatch, getState }: any) => {
+        const chatState: ChatState = getChatState(getState())
+        const conversationList = await initialConversionList()
+        dispatch(
+            updateState({
+                conversationList: conversationList,
+            })
+        )
     }
 )
 
@@ -138,19 +154,27 @@ export const chatSlice = createSlice({
         builder.addCase(getGeminiChatAnswer.fulfilled, (state, action) => {
             if (action.payload as any) {
                 const { status, text, conversationId } = (action.payload as any) || {}
+                let conversationList
                 if (status && text && conversationId) {
-                    const conversationList = updateConversationById({
+                    conversationList = updateConversationById({
                         conversationId,
                         conversationList: state.conversationList,
                         chatItem: {
+                            conversationId,
                             role: Roles.model,
                             parts: [{ text }],
                             timestamp: Date.now(),
                         },
                         isFetching: false,
                     })
-                    state.conversationList = conversationList
+                } else {
+                    conversationList = updateConversationById({
+                        conversationId,
+                        conversationList: state.conversationList,
+                        isFetching: false,
+                    })
                 }
+                state.conversationList = conversationList
             } else {
                 return { ...state }
             }
@@ -170,36 +194,87 @@ const updateConversationById = ({
     conversationList,
 }: {
     conversationId: string
-    chatItem: IChatItem
+    chatItem?: IChatItem
     isFetching: boolean
     conversationList: ChatState['conversationList']
 }) => {
     const newConversationList = _.clone(conversationList)
-    let hasTheConversation = false
-    _.each(newConversationList, conversation => {
-        if (conversation.conversationId == conversationId) {
-            conversation.isFetching = isFetching
-            hasTheConversation = true
-            conversation.history = _.isEmpty(conversation.history) ? [chatItem] : conversation.history?.concat(chatItem)
-            return false
-        }
-    })
+    if (chatItem) {
+        let hasTheConversation = false
+        _.each(newConversationList, conversation => {
+            if (conversation.conversationId == conversationId) {
+                conversation.isFetching = isFetching
+                hasTheConversation = true
+                conversation.history = _.isEmpty(conversation.history)
+                    ? [chatItem]
+                    : conversation.history?.concat(chatItem)
+                return false
+            }
+        })
 
-    if (!hasTheConversation) {
-        newConversationList.push({
+        if (!hasTheConversation) {
+            newConversationList.push({
+                conversationId,
+                history: [chatItem],
+                isFetching,
+            })
+        }
+
+        // save to indexedDb
+        geminiChatDb.chats.add({
             conversationId,
-            history: [chatItem],
-            isFetching,
+            role: chatItem.role,
+            text: chatItem.parts[0].text,
+            timestamp: chatItem.timestamp || Date.now(),
         })
     }
-
-    // save to indexedDb
-    geminiChatDb.chats.add({
-        conversationId,
-        role: chatItem.role,
-        text: chatItem.parts[0].text,
-        timestamp: chatItem.timestamp || Date.now(),
-    })
-
     return newConversationList
+}
+
+// initialConversionList from db
+export const initialConversionList = async () => {
+    let conversationList = await geminiChatDb.conversations.toArray()
+
+    // if it is empty, create one
+    if (_.isEmpty(conversationList)) {
+        const newConversationItem = {
+            conversationId: generateReversibleToken(),
+            conversationName: 'untitled conversation',
+            topK: 1,
+            temperature: 0.9,
+            topP: 1,
+            maxOutputTokens: 2048,
+            harassment: HarmBlockThreshold.BLOCK_NONE,
+            hateSpeech: HarmBlockThreshold.BLOCK_NONE,
+            sexuallyExplicit: HarmBlockThreshold.BLOCK_NONE,
+            dangerousContent: HarmBlockThreshold.BLOCK_NONE,
+        }
+
+        await geminiChatDb.conversations.add(newConversationItem)
+        conversationList = [newConversationItem]
+    }
+
+    let chats = await geminiChatDb.chats.toArray()
+
+    let xhistory: IChatItem[]
+    return _.map(conversationList, c => {
+        xhistory = []
+        _.map(chats, chatItem => {
+            if (chatItem?.conversationId == c?.conversationId) {
+                xhistory.push({
+                    conversationId: chatItem.conversationId,
+                    role: chatItem.role,
+                    timestamp: chatItem.timestamp,
+                    parts: [{ text: chatItem.text }],
+                })
+            }
+        })
+
+        return {
+            ...c,
+            isSelected: true,
+            isFetching: false,
+            history: xhistory,
+        }
+    })
 }

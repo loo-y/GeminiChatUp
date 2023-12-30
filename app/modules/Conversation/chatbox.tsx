@@ -11,6 +11,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { formatDate } from '@/app/shared/utils'
+import Popup from '@/app/components/Popup'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -46,9 +47,7 @@ const ChatBox = () => {
                         </div>
                     </div>
                     <div className=" flex flex-grow items-center justify-end mr-4">
-                        <div className="svg-image flex h-7 w-7 overflow-hidden items-center justify-center cursor-pointer">
-                            <img src={'/images/settings.svg'} className="h-6 w-6 active:mt-[0.5px] active:ml-[0.5px]" />
-                        </div>
+                        <ConversationSetting />
                     </div>
                 </div>
             </div>
@@ -235,6 +234,80 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
                 Send
             </div>
         </div>
+    )
+}
+
+const ConversationSetting = () => {
+    const [value, setValue] = useState(0)
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const newValue = parseFloat(event.target.value)
+        setValue(newValue)
+    }
+
+    return (
+        <Popup
+            trigger={
+                <div className="svg-image flex h-7 w-7 overflow-hidden items-center justify-center cursor-pointer">
+                    <img src={'/images/settings.svg'} className="h-6 w-6 active:mt-[0.5px] active:ml-[0.5px]" />
+                </div>
+            }
+            title={`Conversation Setting`}
+        >
+            <div className=" flex flex-col w-full text-textBlackColor gap-6">
+                <div className="flex flex-row items-center">
+                    <div className="flex w-2/5">
+                        <span>{`Harassment`}</span>
+                    </div>
+                    <div className="flex flex-grow">
+                        <input
+                            id="steps-range"
+                            type="range"
+                            min="0"
+                            max="3"
+                            value={value}
+                            onChange={handleChange}
+                            step="1"
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                        />
+                    </div>
+                </div>
+                <div className="flex flex-row items-center">
+                    <div className="flex w-2/5">
+                        <span>{`Hate Speech`}</span>
+                    </div>
+                    <div className="flex flex-grow">
+                        <input
+                            id="steps-range"
+                            type="range"
+                            min="0"
+                            max="3"
+                            value={value}
+                            onChange={handleChange}
+                            step="1"
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                        />
+                    </div>
+                </div>
+                <div className="flex flex-row items-center">
+                    <div className="flex w-2/5">
+                        <span>{`Sexually Explicit`}</span>
+                    </div>
+                    <div className="flex flex-grow">
+                        <input
+                            id="steps-range"
+                            type="range"
+                            min="0"
+                            max="3"
+                            value={value}
+                            onChange={handleChange}
+                            step="1"
+                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                        />
+                    </div>
+                </div>
+            </div>
+        </Popup>
     )
 }
 export default ChatBox

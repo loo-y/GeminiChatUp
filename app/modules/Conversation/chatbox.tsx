@@ -12,6 +12,8 @@ import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { formatDate } from '@/app/shared/utils'
 import Popup from '@/app/components/Popup'
+import RangeInput from '@/app/components/RangeInput'
+import SeparateLineWithText from '@/app/components/SeparateLineWithText'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -245,6 +247,10 @@ const ConversationSetting = () => {
         setValue(newValue)
     }
 
+    const handleRangeChange = (newValue: number) => {
+        setValue(newValue)
+    }
+
     return (
         <Popup
             trigger={
@@ -254,56 +260,143 @@ const ConversationSetting = () => {
             }
             title={`Conversation Setting`}
         >
-            <div className=" flex flex-col w-full text-textBlackColor gap-6">
-                <div className="flex flex-row items-center">
-                    <div className="flex w-2/5">
-                        <span>{`Harassment`}</span>
+            <div className="flex flex-col w-full gap-10">
+                <div className=" flex flex-col w-full text-textBlackColor gap-6">
+                    <SeparateLineWithText text={`Basic Settings`} />
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Temperature`}</span>
+                        </div>
+                        <div className="flex flex-grow -mb-8">
+                            <RangeInput
+                                id={`temperature`}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                defaultValue={value}
+                                changeCallback={value => {
+                                    handleRangeChange(value)
+                                }}
+                            />
+                        </div>
                     </div>
-                    <div className="flex flex-grow">
-                        <input
-                            id="steps-range"
-                            type="range"
-                            min="0"
-                            max="3"
-                            value={value}
-                            onChange={handleChange}
-                            step="1"
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                        />
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Top K`}</span>
+                        </div>
+                        <div className="flex flex-grow border border-solid border-stone-400 rounded-xl py-2 px-3">
+                            <input
+                                className="w-full text-left text-sm focus:outline-none active:outline-none text-textBlackColor"
+                                type="number"
+                                defaultValue={1}
+                                step={1}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Top P`}</span>
+                        </div>
+                        <div className="flex flex-grow -mb-8">
+                            <RangeInput
+                                id={`topp`}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                defaultValue={value}
+                                changeCallback={value => {
+                                    handleRangeChange(value)
+                                }}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Max Output`}</span>
+                        </div>
+                        <div className="flex flex-grow border border-solid border-stone-400 rounded-xl py-2 px-3">
+                            <input
+                                className="w-full text-left text-sm focus:outline-none active:outline-none text-textBlackColor"
+                                type="number"
+                                defaultValue={2048}
+                                step={1}
+                            />
+                        </div>
                     </div>
                 </div>
-                <div className="flex flex-row items-center">
-                    <div className="flex w-2/5">
-                        <span>{`Hate Speech`}</span>
+                <div className=" flex flex-col w-full text-textBlackColor gap-6">
+                    <SeparateLineWithText text={`Safety settings`} />
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Harassment`}</span>
+                        </div>
+                        <div className="flex flex-grow -mb-8">
+                            <RangeInput
+                                id={`harassment`}
+                                min={0}
+                                max={3}
+                                step={1}
+                                defaultValue={value}
+                                changeCallback={value => {
+                                    handleRangeChange(value)
+                                }}
+                                labelList={[`Block none`, 'Block low', `Block medium`, 'Block high']}
+                            />
+                        </div>
                     </div>
-                    <div className="flex flex-grow">
-                        <input
-                            id="steps-range"
-                            type="range"
-                            min="0"
-                            max="3"
-                            value={value}
-                            onChange={handleChange}
-                            step="1"
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                        />
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Hate Speech`}</span>
+                        </div>
+                        <div className="flex flex-grow -mb-8">
+                            <RangeInput
+                                id={`hatespeech`}
+                                min={0}
+                                max={3}
+                                step={1}
+                                defaultValue={value}
+                                changeCallback={value => {
+                                    handleRangeChange(value)
+                                }}
+                                labelList={[`Block none`, 'Block low', `Block medium`, 'Block high']}
+                            />
+                        </div>
                     </div>
-                </div>
-                <div className="flex flex-row items-center">
-                    <div className="flex w-2/5">
-                        <span>{`Sexually Explicit`}</span>
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Sexually Explicit`}</span>
+                        </div>
+                        <div className="flex flex-grow -mb-8">
+                            <RangeInput
+                                id={`sexuallyexplicit`}
+                                min={0}
+                                max={3}
+                                step={1}
+                                defaultValue={value}
+                                changeCallback={value => {
+                                    handleRangeChange(value)
+                                }}
+                                labelList={[`Block none`, 'Block low', `Block medium`, 'Block high']}
+                            />
+                        </div>
                     </div>
-                    <div className="flex flex-grow">
-                        <input
-                            id="steps-range"
-                            type="range"
-                            min="0"
-                            max="3"
-                            value={value}
-                            onChange={handleChange}
-                            step="1"
-                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                        />
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
+                            <span>{`Dangerous Content`}</span>
+                        </div>
+                        <div className="flex flex-grow -mb-8">
+                            <RangeInput
+                                id={`dangerouscontent`}
+                                min={0}
+                                max={3}
+                                step={1}
+                                defaultValue={value}
+                                changeCallback={value => {
+                                    handleRangeChange(value)
+                                }}
+                                labelList={[`Block none`, 'Block low', `Block medium`, 'Block high']}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

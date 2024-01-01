@@ -12,12 +12,22 @@ interface IRangeInputProps {
     valueShowRight?: boolean
     changeCallback: (value: number) => void
 }
-export default function RangeInput({ id, defaultValue, step, min, max, labelList, valueShowRight }: IRangeInputProps) {
+export default function RangeInput({
+    id,
+    defaultValue,
+    step,
+    min,
+    max,
+    labelList,
+    valueShowRight,
+    changeCallback,
+}: IRangeInputProps) {
     const [value, setValue] = useState(defaultValue)
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         const newValue = parseFloat(event.target.value)
         setValue(newValue)
+        changeCallback(newValue)
     }
 
     const fiexdValue = step > 0 && String(step).includes('.') ? String(step).split('.')[1].length : 0

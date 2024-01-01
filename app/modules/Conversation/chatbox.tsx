@@ -2,7 +2,7 @@
 import React, { useState, ChangeEvent, KeyboardEvent, useRef, useMemo, useEffect } from 'react'
 import { Roles } from '@/app/shared/interfaces'
 import _ from 'lodash'
-import { getChatState, getGeminiChatAnswer, updateConversation } from '../../(pages)/chat/slice'
+import { getChatState, getGeminiChatAnswer, updateConversationInfo } from '../../(pages)/chat/slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { IConversation } from '../../(pages)/chat/interface'
 import { IChatItem } from '@/app/shared/interfaces'
@@ -25,8 +25,6 @@ const ChatBox = () => {
             }) || state.conversationList[0]
         )
     }, [state.conversationList])
-
-    console.log(`the conversation`, conversation)
     const { history, conversationId, modelAvatar, conversationName, isFetching } = conversation || {}
 
     return (
@@ -49,7 +47,7 @@ const ChatBox = () => {
                         </div>
                     </div>
                     <div className=" flex flex-grow items-center justify-end mr-4">
-                        <ConversationSetting />
+                        <ConversationSetting conversation={conversation} />
                     </div>
                 </div>
             </div>
@@ -239,16 +237,30 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
     )
 }
 
-const ConversationSetting = () => {
-    const [value, setValue] = useState(0)
+interface IConversationSettingProps {
+    conversation: IConversation
+}
+const ConversationSetting = ({ conversation }: IConversationSettingProps) => {
+    const dispatch = useAppDispatch()
 
-    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const newValue = parseFloat(event.target.value)
-        setValue(newValue)
-    }
+    const { conversationName, conversationId } = conversation || {}
+
+    const [value, setValue] = useState(0)
 
     const handleRangeChange = (newValue: number) => {
         setValue(newValue)
+    }
+
+    const handleChangeConversationName = (event: ChangeEvent<HTMLInputElement>) => {
+        const newValue = event?.currentTarget?.value
+        if (newValue) {
+            dispatch(
+                updateConversationInfo({
+                    conversationId,
+                    conversationName: _.trim(newValue),
+                })
+            )
+        }
     }
 
     return (
@@ -265,15 +277,29 @@ const ConversationSetting = () => {
                     <SeparateLineWithText text={`Basic Settings`} />
                     <div className="flex flex-row items-center">
                         <div className="flex w-2/5">
+                            <span>{`Conversation Name`}</span>
+                        </div>
+                        <div className="flex flex-grow border border-solid border-stone-400 rounded-xl py-2 px-3">
+                            <input
+                                className="w-full text-left text-sm focus:outline-none active:outline-none text-textBlackColor"
+                                type="text"
+                                defaultValue={conversationName || ''}
+                                onChange={handleChangeConversationName}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-row items-center">
+                        <div className="flex w-2/5">
                             <span>{`Temperature`}</span>
                         </div>
-                        <div className="flex flex-grow -mb-8">
+                        <div className="flex flex-grow">
                             <RangeInput
                                 id={`temperature`}
                                 min={0}
                                 max={1}
                                 step={0.01}
                                 defaultValue={value}
+                                valueShowRight={true}
                                 changeCallback={value => {
                                     handleRangeChange(value)
                                 }}
@@ -297,13 +323,14 @@ const ConversationSetting = () => {
                         <div className="flex w-2/5">
                             <span>{`Top P`}</span>
                         </div>
-                        <div className="flex flex-grow -mb-8">
+                        <div className="flex flex-grow">
                             <RangeInput
                                 id={`topp`}
                                 min={0}
                                 max={1}
                                 step={0.01}
                                 defaultValue={value}
+                                valueShowRight={true}
                                 changeCallback={value => {
                                     handleRangeChange(value)
                                 }}

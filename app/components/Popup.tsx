@@ -18,12 +18,16 @@ export default function Popup({ children, trigger, title }: IPopupProps) {
         setIsOpen(true)
     }
 
+    function keepOpen(status: boolean) {
+        console.log(`keepOpen`, status)
+    }
+
     return (
         <>
             <div onClick={openPopup}>{trigger}</div>
 
             <Transition appear show={isOpen} as={Fragment}>
-                <Dialog as="div" className="relative z-10" onClose={closePopup}>
+                <Dialog as="div" className="relative z-10" onClose={keepOpen}>
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"
@@ -33,7 +37,7 @@ export default function Popup({ children, trigger, title }: IPopupProps) {
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-black/25" />
+                        <div className="fixed inset-0 bg-black/25 -z-10" />
                     </Transition.Child>
 
                     <div className="fixed inset-0 overflow-y-auto">
@@ -56,13 +60,13 @@ export default function Popup({ children, trigger, title }: IPopupProps) {
 
                                     <div className="mt-2">{children}</div>
 
-                                    <div className="mt-4">
+                                    <div className="mt-12 w-full flex items-center justify-end">
                                         <button
                                             type="button"
                                             className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                             onClick={closePopup}
                                         >
-                                            Got it, thanks!
+                                            Close
                                         </button>
                                     </div>
                                 </Dialog.Panel>

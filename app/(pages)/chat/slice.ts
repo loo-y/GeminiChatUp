@@ -87,7 +87,7 @@ export const getGeminiChatAnswer = createAsyncThunk(
     ) => {
         const chatState: ChatState = getChatState(getState())
         dispatch(
-            updateConversation({
+            updateChatToConversation({
                 conversationId,
                 chatItem: {
                     conversationId,
@@ -140,6 +140,28 @@ export const createNewConversationInState = createAsyncThunk(
         )
     }
 )
+
+export const updateConversationInfo = createAsyncThunk(
+    'chatSlice/updateConversationInfo',
+    async (conversation: IConversation, { dispatch, getState }: any) => {
+        const chatState: ChatState = getChatState(getState())
+        const { conversationId } = conversation || {}
+        let newConversationList = _.clone(chatState.conversationList || [])
+        await updateConversationInfoToDB({ conversation })
+
+        const index = _.findIndex(newConversationList, { conversationId })
+        if (index !== -1) {
+            newConversationList[index] = _.assign({}, newConversationList[index], { ...conversation })
+        }
+
+        dispatch(
+            updateState({
+                conversationList: newConversationList,
+            })
+        )
+    }
+)
+
 export const chatSlice = createSlice({
     name: 'chatSlice',
     initialState,
@@ -150,13 +172,13 @@ export const chatSlice = createSlice({
         updateState: (state, action: PayloadAction<Partial<ChatState>>) => {
             return { ...state, ...action.payload }
         },
-        updateConversation: (
+        updateChatToConversation: (
             state,
             action: PayloadAction<{ conversationId: string; chatItem: IChatItem; isFetching: boolean }>
         ) => {
             const { conversationId, chatItem, isFetching } = action.payload || {}
             let conversationList = _.clone(state.conversationList)
-            state.conversationList = updateConversationById({
+            state.conversationList = updateChatToConversationToDB({
                 conversationId,
                 conversationList,
                 chatItem,
@@ -169,7 +191,7 @@ export const chatSlice = createSlice({
             const { status, text, conversationId } = (action.payload as any) || {}
             let conversationList
             if (status && text && conversationId) {
-                conversationList = updateConversationById({
+                conversationList = updateChatToConversationToDB({
                     conversationId,
                     conversationList: state.conversationList,
                     chatItem: {
@@ -181,7 +203,7 @@ export const chatSlice = createSlice({
                     isFetching: false,
                 })
             } else {
-                conversationList = updateConversationById({
+                conversationList = updateChatToConversationToDB({
                     conversationId,
                     conversationList: state.conversationList,
                     isFetching: false,
@@ -193,11 +215,11 @@ export const chatSlice = createSlice({
 })
 
 // export actions
-export const { updateState, updateConversation } = chatSlice.actions
+export const { updateState, updateChatToConversation } = chatSlice.actions
 export default chatSlice.reducer
 
 // ********** helper **********
-const updateConversationById = ({
+const updateChatToConversationToDB = ({
     conversationId,
     chatItem,
     isFetching,
@@ -240,6 +262,8 @@ const updateConversationById = ({
     }
     return newConversationList
 }
+
+const updateConversationInfoToDB = async ({ conversation }: { conversation: IConversation }) => {}
 
 // initialConversionList from db
 export const initialConversionList = async () => {

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { IChatItem } from '../shared/interfaces'
+import { IChatItem, IGenerationConfig, ISafetySetting } from '../shared/interfaces'
 import { fetchTimeout } from './utils'
 
 const commonOptions = {
@@ -13,15 +13,25 @@ export const fetchGeminiChat = async ({
     history,
     inputText,
     conversationId,
+    generationConfig,
+    safetySettings,
 }: {
     history?: IChatItem[]
     inputText: string
     conversationId: string
+    generationConfig?: IGenerationConfig
+    safetySettings?: ISafetySetting[]
 }) => {
-    const jsonBody = {
-        history,
-        inputText,
-    }
+    const jsonBody = _.omitBy(
+        {
+            history,
+            inputText,
+            generationConfig,
+            safetySettings,
+        },
+        _.isUndefined
+    )
+
     let result = {}
     try {
         const response = await Promise.race([

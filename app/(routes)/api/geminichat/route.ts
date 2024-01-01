@@ -13,21 +13,35 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     const body = await request.json()
-    const { history, inputText } = body || {}
+    const { history, inputText, generationConfig, safetySettings } = body || {}
 
     const modelResponse = await getGeminiResponse({
         history,
         inputText,
+        generationConfig,
+        safetySettings,
     })
     const response = NextResponse.json({ ...modelResponse }, { status: 200 })
     response.headers.set('Access-Control-Allow-Origin', '*')
     return response
 }
 
-const getGeminiResponse = async ({ history, inputText }: { history?: IChatItem[]; inputText?: string }) => {
+const getGeminiResponse = async ({
+    history,
+    inputText,
+    generationConfig,
+    safetySettings,
+}: {
+    history?: IChatItem[]
+    inputText?: string
+    generationConfig?: IGenerationConfig
+    safetySettings?: ISafetySetting[]
+}) => {
     const modelResponse = await GeminiChat({
         history,
         inputText: inputText || ``,
+        generationConfig,
+        safetySettings,
     })
 
     return modelResponse

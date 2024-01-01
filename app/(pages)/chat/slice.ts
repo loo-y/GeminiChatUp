@@ -9,7 +9,7 @@ import type { AsyncThunk } from '@reduxjs/toolkit'
 import _ from 'lodash'
 import { IChatItem, Roles } from '@/app/shared/interfaces'
 import { geminiChatDb } from '@/app/shared/db'
-import { HarmBlockThreshold } from '@google/generative-ai'
+import { HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
 import { generateReversibleToken } from '@/app/shared/utils'
 
 // define a queue to store api request
@@ -82,7 +82,12 @@ const makeApiRequestInQueue = createAsyncThunk(
 export const getGeminiChatAnswer = createAsyncThunk(
     'chatSlice/getGeminiChatAnswer',
     async (
-        { history, inputText, conversationId }: { history?: IChatItem[]; inputText: string; conversationId: string },
+        {
+            history,
+            inputText,
+            conversationId,
+            conversation,
+        }: { history?: IChatItem[]; inputText: string; conversationId: string; conversation: IConversation },
         { dispatch, getState }: any
     ) => {
         const chatState: ChatState = getChatState(getState())
@@ -99,19 +104,50 @@ export const getGeminiChatAnswer = createAsyncThunk(
             })
         )
 
+        const { topK, topP, temperature, maxOutputTokens, harassment, hateSpeech, dangerousContent, sexuallyExplicit } =
+            conversation || {}
+        let safetySettings = []
+        if (harassment) {
+            safetySettings.push({
+                category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold: harassment,
+            })
+        }
+        if (hateSpeech) {
+            safetySettings.push({
+                category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold: hateSpeech,
+            })
+        }
+        if (dangerousContent) {
+            safetySettings.push({
+                category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold: dangerousContent,
+            })
+        }
+        if (sexuallyExplicit) {
+            safetySettings.push({
+                category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold: sexuallyExplicit,
+            })
+        }
         dispatch(
             makeApiRequestInQueue({
                 apiRequest: fetchGeminiChat.bind(null, {
                     history,
                     inputText,
                     conversationId,
+                    generationConfig: {
+                        topK,
+                        topP,
+                        temperature,
+                        maxOutputTokens,
+                    },
+                    safetySettings: safetySettings,
                 }),
                 asyncThunk: getGeminiChatAnswer,
             })
         )
-
-        const id = await geminiChatDb.conversations.get(111)
-        console.log(`id`, id)
     }
 )
 
@@ -259,11 +295,32 @@ const updateChatToConversationToDB = ({
             text: chatItem.parts[0].text,
             timestamp: chatItem.timestamp || Date.now(),
         })
+    } else {
+        _.each(newConversationList, conversation => {
+            if (conversation.conversationId == conversationId) {
+                conversation.isFetching = isFetching
+                return false
+            }
+        })
     }
     return newConversationList
 }
 
-const updateConversationInfoToDB = async ({ conversation }: { conversation: IConversation }) => {}
+const updateConversationInfoToDB = async ({ conversation }: { conversation: IConversation }) => {
+    const { conversationId } = conversation || {}
+    let newConversationList = await geminiChatDb.conversations.toArray()
+    const index = _.findIndex(newConversationList, { conversationId })
+    let updatedConversation
+    if (index !== -1) {
+        updatedConversation = newConversationList[index]
+        newConversationList[index] = _.assign({}, newConversationList[index], { ...conversation })
+
+        const theConversationInDB = await geminiChatDb.conversations.get({ conversationId })
+        if (theConversationInDB?.id) {
+            await geminiChatDb.conversations.update(theConversationInDB.id, { ...conversation })
+        }
+    }
+}
 
 // initialConversionList from db
 export const initialConversionList = async () => {

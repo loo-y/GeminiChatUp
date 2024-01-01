@@ -205,6 +205,7 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
             dispatch(
                 getGeminiChatAnswer({
                     conversationId,
+                    conversation,
                     history: _history,
                     inputText: inputValue,
                 })

@@ -2,7 +2,12 @@
 import React, { useState, ChangeEvent, KeyboardEvent, useRef, useMemo, useEffect } from 'react'
 import { Roles } from '@/app/shared/interfaces'
 import _ from 'lodash'
-import { getChatState, getGeminiChatAnswer, updateConversationInfo } from '../../(pages)/chat/slice'
+import {
+    getChatState,
+    getGeminiChatAnswer,
+    updateConversationInfo,
+    removeConversationAndChats,
+} from '../../(pages)/chat/slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { IConversation } from '../../(pages)/chat/interface'
 import { IChatItem } from '@/app/shared/interfaces'
@@ -47,7 +52,8 @@ const ChatBox = () => {
                             ) : null}
                         </div>
                     </div>
-                    <div className=" flex flex-grow items-center justify-end mr-4">
+                    <div className=" flex flex-grow items-center justify-end mr-4 flex-row gap-4">
+                        <ConversationDelete conversation={conversation} />
                         <ConversationSetting conversation={conversation} />
                     </div>
                 </div>
@@ -59,6 +65,8 @@ const ChatBox = () => {
         </div>
     )
 }
+
+export default ChatBox
 
 interface IChatContentProps {
     contentList?: IChatItem[]
@@ -524,4 +532,29 @@ const ConversationSetting = ({ conversation }: IConversationSettingProps) => {
         </Popup>
     )
 }
-export default ChatBox
+
+interface IConversationDeleteProps {
+    conversation: IConversation
+}
+const ConversationDelete = ({ conversation }: IConversationDeleteProps) => {
+    const dispatch = useAppDispatch()
+
+    const handleConfirmDelete = () => {
+        dispatch(removeConversationAndChats(conversation))
+    }
+
+    return (
+        <Popup
+            trigger={
+                <div className="svg-image flex h-7 w-7 overflow-hidden items-center justify-center cursor-pointer">
+                    <img src={'/images/delete.svg'} className="h-6 w-6 active:mt-[0.5px] active:ml-[0.5px]" />
+                </div>
+            }
+            title={`Delete this conversation?`}
+            showConfirm={true}
+            confirmCallBack={handleConfirmDelete}
+        >
+            <div className="flex flex-col w-full gap-10"></div>
+        </Popup>
+    )
+}

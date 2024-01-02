@@ -5,7 +5,7 @@ import ChatBox from '@/app/modules/Conversation/chatbox'
 import ChatList from '@/app/modules/Conversation/chatlist'
 import { Provider } from 'react-redux'
 import store from '@/app/store'
-import { getChatState, initialConversationListInState, initialConversionList } from './slice'
+import { getChatState, initialConversationListInState } from './slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 
 export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }: { serverSideData: any }) => {

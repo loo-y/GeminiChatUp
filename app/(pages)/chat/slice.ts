@@ -11,6 +11,7 @@ import { IChatItem, Roles } from '@/app/shared/interfaces'
 import { geminiChatDb } from '@/app/shared/db'
 import { HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
 import { generateReversibleToken } from '@/app/shared/utils'
+import { defaultConversaionName } from '@/app/shared/constants'
 
 // define a queue to store api request
 type APIFunc = (typeof API)[keyof typeof API]
@@ -198,6 +199,26 @@ export const updateConversationInfo = createAsyncThunk(
     }
 )
 
+export const removeConversationAndChats = createAsyncThunk(
+    'chatSlice/removeConversationAndChats',
+    async (conversation: IConversation, { dispatch, getState }: any) => {
+        const chatState: ChatState = getChatState(getState())
+        const { conversationId } = conversation || {}
+        let newConversationList = _.clone(chatState.conversationList || [])
+        const index = _.findIndex(newConversationList, { conversationId })
+        if (index > -1) {
+            newConversationList.splice(index, 1)
+        }
+        await removeConversationAndChatsInDB(conversation)
+
+        dispatch(
+            updateState({
+                conversationList: newConversationList,
+            })
+        )
+    }
+)
+
 export const chatSlice = createSlice({
     name: 'chatSlice',
     initialState,
@@ -323,13 +344,13 @@ const updateConversationInfoToDB = async ({ conversation }: { conversation: ICon
 }
 
 // initialConversionList from db
-export const initialConversionList = async () => {
+const initialConversionList = async () => {
     let conversationList = await geminiChatDb.conversations.toArray()
     // if it is empty, create one
     if (_.isEmpty(conversationList)) {
         const newConversationItem = {
             conversationId: generateReversibleToken(),
-            conversationName: 'untitled conversation',
+            conversationName: defaultConversaionName,
             topK: 1,
             temperature: 0.9,
             topP: 1,
@@ -369,11 +390,11 @@ export const initialConversionList = async () => {
     })
 }
 
-export const createNewConversation = async (conversationList?: IConversation[]) => {
+const createNewConversation = async (conversationList?: IConversation[]) => {
     conversationList = conversationList || (await geminiChatDb.conversations.toArray())
     const newConversationItem = {
         conversationId: generateReversibleToken(),
-        conversationName: 'untitled conversation',
+        conversationName: defaultConversaionName,
         topK: 1,
         temperature: 0.9,
         topP: 1,
@@ -402,4 +423,10 @@ export const createNewConversation = async (conversationList?: IConversation[]) 
     return _.map(conversationList, c => {
         return { ...c, isSelected: false }
     }).concat([{ ...newConversationItem }])
+}
+
+const removeConversationAndChatsInDB = async (conversation: IConversation) => {
+    const { conversationId } = conversation || {}
+    await geminiChatDb.conversations.where('conversationId').equals(conversationId).delete()
+    await geminiChatDb.chats.where('conversationId').equals(conversationId).delete()
 }

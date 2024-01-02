@@ -6,8 +6,12 @@ interface IPopupProps {
     children: JSX.Element
     trigger: JSX.Element
     title?: string
+
+    showConfirm?: boolean
+
+    confirmCallBack?: () => void
 }
-export default function Popup({ children, trigger, title }: IPopupProps) {
+export default function Popup({ children, trigger, title, showConfirm, confirmCallBack }: IPopupProps) {
     let [isOpen, setIsOpen] = useState(false)
 
     function closePopup() {
@@ -60,15 +64,37 @@ export default function Popup({ children, trigger, title }: IPopupProps) {
 
                                     <div className="mt-2">{children}</div>
 
-                                    <div className="mt-12 w-full flex items-center justify-end">
-                                        <button
-                                            type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                            onClick={closePopup}
-                                        >
-                                            Close
-                                        </button>
-                                    </div>
+                                    {showConfirm && confirmCallBack ? (
+                                        <div className="mt-12 w-full flex items-center justify-end flex-row gap-10">
+                                            <button
+                                                type="button"
+                                                className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-3 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none  focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                                                onClick={() => {
+                                                    confirmCallBack()
+                                                    closePopup()
+                                                }}
+                                            >
+                                                Confirm
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-3 text-sm font-medium text-green-600 hover:bg-green-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                                                onClick={closePopup}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-12 w-full flex items-center justify-end">
+                                            <button
+                                                type="button"
+                                                className="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-3 text-sm font-medium text-green-600 hover:bg-green-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                                                onClick={closePopup}
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
+                                    )}
                                 </Dialog.Panel>
                             </Transition.Child>
                         </div>

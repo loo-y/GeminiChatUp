@@ -20,6 +20,7 @@ import Popup from '@/app/components/Popup'
 import RangeInput from '@/app/components/RangeInput'
 import SeparateLineWithText from '@/app/components/SeparateLineWithText'
 import { HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
+import DisableSafariBounce from '@/app/components/DisableSafariBounce'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -223,6 +224,22 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
         }
     }
 
+    const handleTouchMove = (event: TouchEvent) => {
+        event.preventDefault()
+    }
+
+    const handleFocus = () => {
+        // document.body.addEventListener('touchmove', ()=>{inputRef.current?.blur()}, { passive: false });
+    }
+    const handleBlur = () => {
+        setTimeout(() => {
+            document.documentElement.scrollTop = 0
+            document.body.scrollTop = 0
+            window.innerHeight = window.outerHeight
+            window.scrollTo(0, 0)
+        }, 50)
+    }
+
     return (
         <div className="__chat_input__ absolute bottom-10 left-0 right-4 max-h-[7.5rem] overflow-scroll rounded-lg flex flex-row bg-white border-[#eee] border border-r-0 border-solid">
             <textarea
@@ -236,6 +253,8 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
                 onCompositionEnd={handleCompositionEnd}
                 className="block flex-grow p-4 bg-white outline-none "
                 placeholder="Type your messeage here..."
+                onBlur={handleBlur}
+                onFocus={handleFocus}
             ></textarea>
             <div
                 className="bg-lightGreen text-white w-20 flex items-center justify-center cursor-pointer"

@@ -6,6 +6,7 @@
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 180, 200, 215;
   --background-end-rgb: 190 210 205;
+  --vh: calc(var(--vh, 1vh) * 1);
 }
 
 body {
@@ -18,4 +19,9 @@ body {
     )
     rgb(var(--background-start-rgb));
   height: 100vh;
+}
+
+.main {
+  height: 100vh; /* 此处使用了 vh 单位 */
+  height: calc(var(--vh, 1vh) * 100); /* 使用 --vh 变量 */
 }

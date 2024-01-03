@@ -1,6 +1,6 @@
 'use client'
 import type { NextPage, GetServerSideProps } from 'next'
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import ChatBox from '@/app/modules/Conversation/chatbox'
 import ChatList from '@/app/modules/Conversation/chatlist'
 import { Provider } from 'react-redux'
@@ -11,7 +11,8 @@ import { useAppSelector, useAppDispatch } from '@/app/hooks'
 export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }: { serverSideData: any }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
-    // dispatch(initialConversationListInState())
+
+    const [virtualHeight, setVirtualHeight] = useState(0)
     useEffect(() => {
         dispatch(initialConversationListInState())
 
@@ -24,12 +25,13 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
             // We execute the same script as before
             let vh = window.innerHeight * 0.01
             console.log(vh)
+            setVirtualHeight(vh)
             document.documentElement.style.setProperty('--vh', `${vh}px`)
         })
     }, [])
     console.log(`Chat`, state)
     return (
-        <main className="main h-screen overflow-hidden ">
+        <main className="main h-full overflow-hidden">
             <div className="chat-container m-0 bg-white shadow-2xl h-[100vh]  flex flex-row">
                 <div className="left-side hidden md:block flex-none w-1/5 h-full max-w-[25rem] border-r border-[#eee] border-solid">
                     <ChatList />

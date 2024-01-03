@@ -18,10 +18,12 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-  height: 100vh;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100); /* 使用 --vh 变量 */
+
 }
 
-.main {
+.__chatbox__, .main{
   height: 100vh; /* 此处使用了 vh 单位 */
   height: calc(var(--vh, 1vh) * 100); /* 使用 --vh 变量 */
 }

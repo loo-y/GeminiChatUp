@@ -34,7 +34,7 @@ const ChatBox = () => {
     const { history, conversationId, modelAvatar, conversationName, isFetching } = conversation || {}
 
     return (
-        <div className="__chatbox__ flex flex-col h-screen text-stone-900 bg-[#fafafa]">
+        <div className="__chatbox__ flex flex-col text-stone-900 bg-[#fafafa]">
             <div className="flex-none title h-16 flex border-b border-[#eee] border-solid rounded-tr-lg bg-white">
                 <div className=" flex flex-row items-center ml-4 w-full">
                     <div className="flex-none flex-row flex w-1/2 items-center gap-4">
@@ -197,7 +197,7 @@ const ChatInput = ({ conversation }: { conversation: IConversation }) => {
     const handleSendQuestion = () => {
         const { conversationId, isFetching, history } = conversation || {}
         console.log(`conversation`, conversation)
-        if (!isFetching) {
+        if (!isFetching && inputValue?.length) {
             let _history = _.reduce(
                 history,
                 (result: IChatItem[], item: IChatItem) => {

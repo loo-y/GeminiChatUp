@@ -81,6 +81,11 @@ const GeminiChat = async ({ generationConfig, safetySettings, history, inputText
 
     try {
         const chat = model.startChat(params)
+
+        const currentHistory = await chat.getHistory()
+        const { totalTokens } = await model.countTokens({
+            contents: [...currentHistory, { role: 'user', parts: [{ text: inputText }] }],
+        })
         if (isStream) {
             const streamResult = await chat.sendMessageStream(inputText)
             let text = ''
@@ -93,13 +98,16 @@ const GeminiChat = async ({ generationConfig, safetySettings, history, inputText
             return {
                 status: true,
                 text,
+                totalTokens,
             }
         }
         const result = await chat.sendMessage(inputText)
+
         const response = result.response
         return {
             status: true,
             text: response.text(),
+            totalTokens,
         }
     } catch (e) {
         console.log(`GeminiChat error`, e)

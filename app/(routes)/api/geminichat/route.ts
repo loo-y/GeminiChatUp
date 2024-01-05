@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import GeminiChat from '../../gemini/geminiChat'
+import { GeminiChat } from '../../gemini'
 import { ISafetySetting, IGenerationConfig, IChatItem } from '../../gemini/interface'
 export async function GET(request: NextRequest) {
     const inputText = request.nextUrl?.searchParams?.get('inputtext') || ''

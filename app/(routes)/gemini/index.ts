@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
 import _ from 'lodash'
-import { ISafetySetting, IGenerationConfig, IChatItem } from './interface'
+import { ISafetySetting, IGenerationConfig, IChatItem, IGeminiTokenCountProps } from './interface'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
@@ -44,7 +44,13 @@ interface IGeminiChatProps {
     isStream?: boolean
 }
 
-const GeminiChat = async ({ generationConfig, safetySettings, history, inputText, isStream }: IGeminiChatProps) => {
+export const GeminiChat = async ({
+    generationConfig,
+    safetySettings,
+    history,
+    inputText,
+    isStream,
+}: IGeminiChatProps) => {
     let error = `input text is required.`
     if (!inputText)
         return {
@@ -121,4 +127,25 @@ const GeminiChat = async ({ generationConfig, safetySettings, history, inputText
     }
 }
 
-export default GeminiChat
+export const GeminiTokenCount = async ({ prompt, imageParts, history }: IGeminiTokenCountProps) => {
+    let totalTokens = 0,
+        countTokensResult
+
+    if (!prompt && !imageParts?.length && !history?.length) {
+        return { totalTokens }
+    }
+
+    if (prompt && imageParts?.length) {
+        countTokensResult = await model.countTokens([prompt, ...imageParts])
+    } else if (prompt) {
+        countTokensResult = await model.countTokens([prompt])
+    } else if (history) {
+        countTokensResult = await model.countTokens({
+            contents: [...history],
+        })
+    }
+
+    totalTokens = countTokensResult?.totalTokens || totalTokens
+
+    return { totalTokens }
+}

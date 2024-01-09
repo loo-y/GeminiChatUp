@@ -23,3 +23,17 @@ export interface IChatItem {
     parts: Record<'text', string>[]
     timestamp?: number
 }
+
+export interface IImagePart {
+    inlineData: {
+        data: string
+        mimeType: string
+    }
+}
+
+export interface IGeminiTokenCountProps {
+    prompt?: string
+    imageParts?: IImagePart[]
+    history?: Pick<IChatItem, 'role' | 'parts'>[]
+    limit?: number
+}

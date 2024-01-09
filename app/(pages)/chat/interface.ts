@@ -5,6 +5,7 @@ export interface IConversation
         Pick<
             Conversation,
             | 'conversationName'
+            | 'historyLimitTS'
             | 'temperature'
             | 'topK'
             | 'topP'
@@ -17,6 +18,7 @@ export interface IConversation
     > {
     conversationId: string
     history?: IChatItem[]
+    archived?: IChatItem[]
     isSelected?: boolean
     isFetching?: boolean
     modelAvatar?: string

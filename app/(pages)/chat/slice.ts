@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, original, PayloadAction } from '@reduxjs/toolkit'
 import type { AppState, AppThunk } from '@/app/store'
 import * as API from '@/app/shared/API'
-import { fetchGeminiChat } from '@/app/shared/API'
+import { fetchGeminiChat, fetchTokenCount } from '@/app/shared/API'
 import { ChatState, IConversation } from './interface'
 // import _ from 'lodash' // use specific function from lodash
 import { map as _map } from 'lodash'
@@ -11,7 +11,7 @@ import { IChatItem, Roles } from '@/app/shared/interfaces'
 import { geminiChatDb } from '@/app/shared/db'
 import { HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
 import { generateReversibleToken } from '@/app/shared/utils'
-import { defaultConversaionName } from '@/app/shared/constants'
+import { defaultConversaionName, inputTokenLimit } from '@/app/shared/constants'
 
 // define a queue to store api request
 type APIFunc = (typeof API)[keyof typeof API]
@@ -92,18 +92,76 @@ export const getGeminiChatAnswer = createAsyncThunk(
         { dispatch, getState }: any
     ) => {
         const chatState: ChatState = getChatState(getState())
+        let historyLimitTS = conversation.historyLimitTS || -1
+        const newChatItem = {
+            conversationId,
+            role: Roles.user,
+            parts: [{ text: inputText }],
+            timestamp: Date.now(),
+        }
+
         dispatch(
             updateChatToConversation({
                 conversationId,
-                chatItem: {
-                    conversationId,
-                    role: Roles.user,
-                    parts: [{ text: inputText }],
-                    timestamp: Date.now(),
-                },
+                chatItem: newChatItem,
                 isFetching: true,
             })
         )
+
+        let historyToFetch: IChatItem[] = []
+        if (history && !_.isEmpty(history)) {
+            const limit = inputTokenLimit.GeminiPro
+            historyToFetch = history
+            if (historyLimitTS > -1) {
+                const _index_ =
+                    _.findIndex(history, h => {
+                        return h.timestamp == historyLimitTS
+                    }) || 0
+                historyToFetch = history.slice(_index_)
+            }
+            let { totalTokens, validIndex } = await fetchTokenCount({
+                history: _.map(historyToFetch, h => {
+                    return {
+                        role: h.role,
+                        parts: h.parts,
+                    }
+                }).concat({
+                    role: newChatItem.role,
+                    parts: newChatItem.parts,
+                }),
+                limit,
+            })
+
+            if (totalTokens && validIndex != undefined && totalTokens > limit) {
+                let theChatItemLimit = historyToFetch[validIndex]
+                if (theChatItemLimit?.timestamp) {
+                    if (theChatItemLimit.role == Roles.model) {
+                        validIndex = validIndex + 1
+                        theChatItemLimit = historyToFetch[validIndex]
+                    }
+                    if (theChatItemLimit?.timestamp) {
+                        historyLimitTS = theChatItemLimit.timestamp
+                        historyToFetch = historyToFetch.slice(validIndex)
+                    } else {
+                        historyLimitTS = newChatItem.timestamp
+                        historyToFetch = []
+                    }
+                    dispatch(updateConversationInfo({ ...conversation, historyLimitTS }))
+                } else {
+                    // newChatItem
+                    console.log(`the input text is too long!`)
+                    alert(`the input text is too long!`)
+
+                    dispatch(
+                        updateChatToConversation({
+                            conversationId,
+                            isFetching: false,
+                        })
+                    )
+                    return
+                }
+            }
+        }
 
         const { topK, topP, temperature, maxOutputTokens, harassment, hateSpeech, dangerousContent, sexuallyExplicit } =
             conversation || {}
@@ -135,7 +193,7 @@ export const getGeminiChatAnswer = createAsyncThunk(
         dispatch(
             makeApiRequestInQueue({
                 apiRequest: fetchGeminiChat.bind(null, {
-                    history,
+                    history: historyToFetch,
                     inputText,
                     conversationId,
                     generationConfig: {
@@ -231,7 +289,7 @@ export const chatSlice = createSlice({
         },
         updateChatToConversation: (
             state,
-            action: PayloadAction<{ conversationId: string; chatItem: IChatItem; isFetching: boolean }>
+            action: PayloadAction<{ conversationId: string; chatItem?: IChatItem; isFetching: boolean }>
         ) => {
             const { conversationId, chatItem, isFetching } = action.payload || {}
             let conversationList = _.clone(state.conversationList)
@@ -338,6 +396,9 @@ const updateConversationInfoToDB = async ({ conversation }: { conversation: ICon
 
         const theConversationInDB = await geminiChatDb.conversations.get({ conversationId })
         if (theConversationInDB?.id) {
+            // 不存在于 db 中
+            delete conversation.history
+            delete conversation.isFetching
             await geminiChatDb.conversations.update(theConversationInDB.id, { ...conversation })
         }
     }
@@ -360,6 +421,8 @@ const initialConversionList = async () => {
             sexuallyExplicit: HarmBlockThreshold.BLOCK_NONE,
             dangerousContent: HarmBlockThreshold.BLOCK_NONE,
             modelAvatar: `/avatars/${__avatar__[Math.floor(Math.random() * 6)]}.png`,
+            historyLimitTS: -1,
+            archivedTS: -1,
         }
 
         await geminiChatDb.conversations.add(newConversationItem)
@@ -405,6 +468,8 @@ const createNewConversation = async (conversationList?: IConversation[]) => {
         dangerousContent: HarmBlockThreshold.BLOCK_NONE,
         modelAvatar: `/avatars/${__avatar__[Math.floor(Math.random() * 6)]}.png`,
         isSelected: true,
+        historyLimitTS: -1,
+        archivedTS: -1,
     }
 
     geminiChatDb

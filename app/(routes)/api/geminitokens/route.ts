@@ -13,12 +13,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     const body = await request.json()
-    const { history, prompt, imageParts } = body || {}
+    const { history, prompt, imageParts, limit } = body || {}
 
     const countResponse = await getGeminiTokenCount({
         history,
         prompt,
         imageParts,
+        limit,
     })
     const response = NextResponse.json({ ...countResponse }, { status: 200 })
     response.headers.set('Access-Control-Allow-Origin', '*')

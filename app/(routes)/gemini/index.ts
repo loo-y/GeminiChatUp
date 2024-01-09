@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
 import _ from 'lodash'
 import { ISafetySetting, IGenerationConfig, IChatItem, IGeminiTokenCountProps } from './interface'
+import { inputTokenLimit } from '@/app/shared/constants'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
@@ -127,8 +128,9 @@ export const GeminiChat = async ({
     }
 }
 
-export const GeminiTokenCount = async ({ prompt, imageParts, history }: IGeminiTokenCountProps) => {
+export const GeminiTokenCount = async ({ prompt, imageParts, history, limit }: IGeminiTokenCountProps) => {
     let totalTokens = 0,
+        validIndex = 0,
         countTokensResult
 
     if (!prompt && !imageParts?.length && !history?.length) {
@@ -139,13 +141,28 @@ export const GeminiTokenCount = async ({ prompt, imageParts, history }: IGeminiT
         countTokensResult = await model.countTokens([prompt, ...imageParts])
     } else if (prompt) {
         countTokensResult = await model.countTokens([prompt])
-    } else if (history) {
+    } else if (history && !_.isEmpty(history)) {
         countTokensResult = await model.countTokens({
             contents: [...history],
         })
+        if (limit && limit > 0 && countTokensResult?.totalTokens > limit) {
+            let currentTokens = countTokensResult.totalTokens
+            let start = 0
+            const historyLength = history.length
+            while (currentTokens > limit && start < historyLength) {
+                start++
+                currentTokens =
+                    (
+                        await model.countTokens({
+                            contents: history.slice(start),
+                        })
+                    )?.totalTokens || 0
+            }
+            validIndex = start
+        }
     }
 
     totalTokens = countTokensResult?.totalTokens || totalTokens
 
-    return { totalTokens }
+    return { totalTokens, validIndex }
 }

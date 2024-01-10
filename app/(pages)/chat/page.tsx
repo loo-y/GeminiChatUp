@@ -7,6 +7,7 @@ import { Provider } from 'react-redux'
 import store from '@/app/store'
 import { getChatState, initialConversationListInState } from './slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/app/components/ui/resizable'
 
 export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }: { serverSideData: any }) => {
     const dispatch = useAppDispatch()
@@ -30,6 +31,20 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
         })
     }, [])
     console.log(`Chat`, state)
+    return (
+        <main className="main h-full overflow-hidden">
+            <ResizablePanelGroup direction="horizontal">
+                <ResizablePanel maxSize={25} defaultSize={20} minSize={10} className="hidden md:block max-w-[30rem]">
+                    <ChatList />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel>
+                    <ChatBox />
+                </ResizablePanel>
+            </ResizablePanelGroup>
+        </main>
+    )
+
     return (
         <main className="main h-full overflow-hidden">
             <div className="chat-container m-0 bg-white shadow-2xl h-[100vh]  flex flex-row">

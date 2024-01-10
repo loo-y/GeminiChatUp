@@ -23,7 +23,6 @@ const UploadImageButton: React.FC = () => {
             const fileInput = inputRef.current as HTMLInputElement
             // 检查文件类型
             if (!['image/png', 'image/jpeg'].includes(file.type)) {
-                console.error('只能上传PNG或JPEG类型的图片')
                 setAlertText(`只能上传PNG或JPEG类型的图片`)
                 fileInput.value = ''
                 return
@@ -31,9 +30,7 @@ const UploadImageButton: React.FC = () => {
 
             // 检查文件大小
             if (file.size > imageSizeLimition) {
-                console.error('图片大小不能超过1000KB')
-                setAlertText(`图片大小不能超过1000KB`)
-                console.log(`value`, fileInput.value)
+                setAlertText(`图片大小不能超过${imageSizeLimition}KB`)
                 fileInput.value = ''
                 return
             }

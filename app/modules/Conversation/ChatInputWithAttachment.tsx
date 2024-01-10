@@ -1,11 +1,33 @@
 'use client'
-import React, { useState, ChangeEvent, KeyboardEvent, useRef } from 'react'
+import React, { useState, ChangeEvent, KeyboardEvent, MouseEvent, useRef } from 'react'
 import _ from 'lodash'
-import { getGeminiChatAnswer } from '../../(pages)/chat/slice'
-import { useAppDispatch } from '@/app/hooks'
+import { getChatState, getGeminiChatAnswer, deleteImageFromInput } from '../../(pages)/chat/slice'
+import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { IConversation } from '../../(pages)/chat/interface'
-import { IChatItem } from '@/app/shared/interfaces'
+import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import UploadImageButton from './UploadImageButton'
+import { Button } from '@/app/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/app/components/ui/dialog'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogOverlay,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/app/components/ui/alert-dialog'
 
 const ChatInputWithAttachment = ({
     conversation,
@@ -15,6 +37,8 @@ const ChatInputWithAttachment = ({
     attachable?: boolean
 }) => {
     const dispatch = useAppDispatch()
+    const state = useAppSelector(getChatState)
+    const { inputImageList } = state || {}
     const [isComposing, setIsComposing] = useState(false)
     const [inputValue, setInputValue] = useState<string>('')
     const [inputRows, setInputRows] = useState<number>(1)
@@ -102,48 +126,76 @@ const ChatInputWithAttachment = ({
         }, 50)
     }
 
+    const handleDeleteImage = (imageItem: IImageItem) => {
+        dispatch(
+            deleteImageFromInput({
+                imageId: imageItem.imageId,
+            })
+        )
+    }
+
+    const showImages = attachable && !_.isEmpty(inputImageList)
+
     return (
         <>
             {/* <div className='__chatinput_with_attachment__ absolute bottom-10 left-0 right-4 max-h-[7.5rem] overflow-scroll bg-transparent flex flex-row gap-2'> */}
 
-            <div className="__chatinput_with_attachment__ absolute bottom-10 left-0 right-4 max-h-[7.5rem] flex">
-                <div className="overflow-y-scroll overflow-x-hidden bg-transparent flex flex-row gap-1 flex-grow max-w-[73rem] mx-auto">
-                    <div className="flex w-10 items-end ">
-                        <div className=" flex ">
-                            <div className="svg-image flex h-[3.75rem] w-8 overflow-hidden items-center justify-center cursor-pointer">
-                                <img src={'/images/clear.svg'} className="h-7 w-7 " />
+            <div className="__chatinput_with_attachment__ absolute flex flex-col bottom-10 left-0 right-4 max-h-[7.5rem] ">
+                {showImages ? (
+                    <div className="flex flex-row gap-2 w-full h-20 clear-both mx-auto pl-11 mb-2 items-center max-w-[73rem] ">
+                        {_.map(inputImageList, (imageItem, imageIndex) => {
+                            const { base64Data } = imageItem || {}
+                            return (
+                                <ThumbnailDisplay
+                                    key={`inputImageList_${imageIndex}`}
+                                    imageUrl={base64Data}
+                                    onDelete={() => {
+                                        handleDeleteImage(imageItem)
+                                    }}
+                                />
+                            )
+                        })}
+                    </div>
+                ) : null}
+                <div className="__chatinput_with_attachment__ relative flex">
+                    <div className="overflow-y-scroll overflow-x-hidden bg-transparent flex flex-row gap-1 flex-grow max-w-[73rem] mx-auto">
+                        <div className="flex w-10 items-end ">
+                            <div className=" flex ">
+                                <div className="svg-image flex h-[3.75rem] w-8 overflow-hidden items-center justify-center cursor-pointer">
+                                    <img src={'/images/clear.svg'} className="h-7 w-7 " />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="flex flex-grow flex-row rounded-[2rem] border-2 border-green-600 bg-white pl-5 gap-1">
-                        <div className="flex my-1 flex-row flex-grow ml-2 bg-transparent">
-                            <textarea
-                                value={inputValue}
-                                ref={inputRef}
-                                onChange={handleInputChange}
-                                onKeyDown={handleKeyDown}
-                                rows={inputRows}
-                                style={{ resize: 'none' }}
-                                onCompositionStart={handleCompositionStart}
-                                onCompositionEnd={handleCompositionEnd}
-                                className="block flex-grow bg-white outline-none py-2 w-full text-lg"
-                                placeholder="Type your messeage here..."
-                                onBlur={handleBlur}
-                                onFocus={handleFocus}
-                            ></textarea>
-                        </div>
-                        <div className="flex flex-row justify-end items-end my-2 mr-[0.4rem] gap-1">
-                            {attachable ? (
+                        <div className="flex flex-grow flex-row rounded-[2rem] border-2 border-green-600 bg-white pl-5 gap-1">
+                            <div className="flex my-1 flex-row flex-grow ml-2 bg-transparent">
+                                <textarea
+                                    value={inputValue}
+                                    ref={inputRef}
+                                    onChange={handleInputChange}
+                                    onKeyDown={handleKeyDown}
+                                    rows={inputRows}
+                                    style={{ resize: 'none' }}
+                                    onCompositionStart={handleCompositionStart}
+                                    onCompositionEnd={handleCompositionEnd}
+                                    className="block flex-grow bg-white outline-none py-2 w-full text-lg"
+                                    placeholder="Type your messeage here..."
+                                    onBlur={handleBlur}
+                                    onFocus={handleFocus}
+                                ></textarea>
+                            </div>
+                            <div className="flex flex-row justify-end items-end my-2 mr-[0.4rem] gap-1">
+                                {attachable ? (
+                                    <div className=" items-center flex">
+                                        <UploadImageButton />
+                                    </div>
+                                ) : null}
                                 <div className=" items-center flex">
-                                    <UploadImageButton />
-                                </div>
-                            ) : null}
-                            <div className=" items-center flex">
-                                <div
-                                    className="svg-image flex h-10 w-10 overflow-hidden items-center justify-center cursor-pointer bg-lightGreen rounded-full"
-                                    onClick={handleSendQuestion}
-                                >
-                                    <img src={'/images/send.svg'} className="h-6 w-6 " />
+                                    <div
+                                        className="svg-image flex h-10 w-10 overflow-hidden items-center justify-center cursor-pointer bg-lightGreen rounded-full"
+                                        onClick={handleSendQuestion}
+                                    >
+                                        <img src={'/images/send.svg'} className="h-6 w-6 " />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -155,3 +207,93 @@ const ChatInputWithAttachment = ({
 }
 
 export default ChatInputWithAttachment
+
+const ThumbnailDisplay: React.FC<{ imageUrl: string; onDelete: () => void }> = ({ imageUrl, onDelete }) => {
+    const [hovered, setHovered] = useState(false)
+    const [openPreview, setOpenPreview] = useState(false)
+    const thumbnailRef = useRef(null)
+    const imagePreviewRef = useRef(null)
+
+    const handleMouseEnter = () => {
+        setHovered(true)
+    }
+
+    const handleMouseLeave = () => {
+        setHovered(false)
+    }
+
+    const handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onDelete()
+    }
+
+    const handleClickThumbnail = () => {
+        setOpenPreview(true)
+    }
+    const handleClosePreview = () => {
+        setOpenPreview(false)
+    }
+
+    const handleUnactiveClose = () => {
+        if (imagePreviewRef?.current) {
+            console.log(`handleUnactiveClose`)
+            const imagePreviewElement = imagePreviewRef.current as HTMLDivElement
+            setTimeout(() => {
+                imagePreviewElement.click()
+                imagePreviewElement.focus()
+                console.log(`imagePreviewElement`, imagePreviewElement)
+            }, 100)
+        }
+    }
+    return (
+        <>
+            <div
+                className="w-12 h-full relative  rounded-lg bg-contain bg-no-repeat bg-center border border-gray-200 bg-gray-200"
+                style={{ backgroundImage: `url(${imageUrl})` }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onClick={handleClickThumbnail}
+                ref={thumbnailRef}
+            >
+                {hovered && (
+                    <button
+                        className="absolute -top-2 -right-2 p-1 bg-gray-600 text-white rounded-full"
+                        onClick={handleDelete}
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            className="w-2 h-2"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                )}
+            </div>
+            <div className="">
+                <Dialog open={openPreview}>
+                    <DialogContent
+                        className="min-w-[80vw] min-h-[80vh] max-h-[90vh] w-full bg-gray-200 border-gray-200"
+                        onOpenAutoFocus={handleUnactiveClose}
+                        onInteractOutside={handleClosePreview}
+                        autoFocus={false}
+                        onEscapeKeyDown={handleClosePreview}
+                    >
+                        <div
+                            className="grid gap-4 py-4 bg-contain bg-no-repeat bg-center w-full h-full"
+                            style={{ backgroundImage: `url(${imageUrl})` }}
+                        ></div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </>
+    )
+}

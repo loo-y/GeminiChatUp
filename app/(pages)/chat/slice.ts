@@ -7,7 +7,7 @@ import { ChatState, IConversation } from './interface'
 import { map as _map } from 'lodash'
 import type { AsyncThunk } from '@reduxjs/toolkit'
 import _ from 'lodash'
-import { IChatItem, Roles } from '@/app/shared/interfaces'
+import { IChatItem, Roles, GeminiModel } from '@/app/shared/interfaces'
 import { geminiChatDb } from '@/app/shared/db'
 import { HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
 import { generateReversibleToken } from '@/app/shared/utils'
@@ -21,6 +21,8 @@ export const getChatState = (state: AppState): ChatState => state.chatStore
 const initialState: ChatState & Record<string, any> = {
     requestInQueueFetching: false,
     conversationList: [],
+    imageResourceList: [],
+    inputImageList: [],
 }
 
 const __avatar__ = [`animal001`, `animal002`, `animal003`, `animal004`, `animal005`, `animal006`]
@@ -78,6 +80,11 @@ const makeApiRequestInQueue = createAsyncThunk(
         // set RequestInQueueFetching to false when all requests are processed
         dispatch(setRequestInQueueFetching(false))
     }
+)
+
+export const getGeminiContentAnswer = createAsyncThunk(
+    'chatSlice/getGeminiContentAnswer',
+    async ({}, { dispatch, getState }: any) => {}
 )
 
 export const getGeminiChatAnswer = createAsyncThunk(
@@ -225,9 +232,13 @@ export const initialConversationListInState = createAsyncThunk(
 
 export const createNewConversationInState = createAsyncThunk(
     'chatSlice/createNewConversationInState',
-    async (params, { dispatch, getState }: any) => {
+    async (params: { modelType?: GeminiModel }, { dispatch, getState }: any) => {
+        const { modelType } = params || {}
         const chatState: ChatState = getChatState(getState())
-        const conversationList = await createNewConversation(chatState.conversationList)
+        const conversationList = await createNewConversation({
+            conversationList: chatState.conversationList,
+            modelType,
+        })
         dispatch(
             updateState({
                 conversationList: conversationList,
@@ -300,6 +311,27 @@ export const chatSlice = createSlice({
                 isFetching,
             })
         },
+        addImageToInput: (state, action: PayloadAction<{ base64Content: string }>) => {
+            const { base64Content } = action.payload || {}
+            let currentInputImageList = _.clone(state.inputImageList) || []
+            currentInputImageList.push({
+                imageId: generateReversibleToken(),
+                base64Data: base64Content,
+                timestamp: Date.now(),
+            })
+            state.inputImageList = currentInputImageList
+        },
+        deleteImageFromInput: (state, action: PayloadAction<{ imageId: string }>) => {
+            const { imageId } = action.payload || {}
+            let currentInputImageList = _.clone(state.inputImageList) || []
+            currentInputImageList = _.filter(currentInputImageList, imageItem => {
+                return imageItem?.imageId != imageId
+            })
+            state.inputImageList = currentInputImageList
+        },
+        clearInputImageList: state => {
+            state.inputImageList = []
+        },
     },
     extraReducers: builder => {
         builder.addCase(getGeminiChatAnswer.fulfilled, (state, action) => {
@@ -330,7 +362,8 @@ export const chatSlice = createSlice({
 })
 
 // export actions
-export const { updateState, updateChatToConversation } = chatSlice.actions
+export const { updateState, updateChatToConversation, addImageToInput, deleteImageFromInput, clearInputImageList } =
+    chatSlice.actions
 export default chatSlice.reducer
 
 // ********** helper **********
@@ -423,6 +456,7 @@ const initialConversionList = async () => {
             modelAvatar: `/avatars/${__avatar__[Math.floor(Math.random() * 6)]}.png`,
             historyLimitTS: -1,
             archivedTS: -1,
+            modelType: GeminiModel.geminiPro,
         }
 
         await geminiChatDb.conversations.add(newConversationItem)
@@ -453,7 +487,13 @@ const initialConversionList = async () => {
     })
 }
 
-const createNewConversation = async (conversationList?: IConversation[]) => {
+const createNewConversation = async ({
+    modelType,
+    conversationList,
+}: {
+    conversationList?: IConversation[]
+    modelType?: GeminiModel
+}) => {
     conversationList = conversationList || (await geminiChatDb.conversations.toArray())
     const newConversationItem = {
         conversationId: generateReversibleToken(),
@@ -470,6 +510,7 @@ const createNewConversation = async (conversationList?: IConversation[]) => {
         isSelected: true,
         historyLimitTS: -1,
         archivedTS: -1,
+        modelType: modelType == GeminiModel.geminiProVision ? GeminiModel.geminiProVision : GeminiModel.geminiPro,
     }
 
     geminiChatDb

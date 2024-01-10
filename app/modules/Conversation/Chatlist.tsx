@@ -12,7 +12,7 @@ const ChatList = () => {
     const state = useAppSelector(getChatState)
     // createNewConversationInState
     const handleAddNewConsation = () => {
-        dispatch(createNewConversationInState())
+        dispatch(createNewConversationInState({}))
     }
     return (
         <div className="__chatlist__ flex w-full mt-0">

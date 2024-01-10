@@ -1,4 +1,4 @@
-import { IChatItem } from '@/app/shared/interfaces'
+import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import type { Conversation } from '@/app/shared/db'
 export interface IConversation
     extends Partial<
@@ -14,6 +14,7 @@ export interface IConversation
             | 'hateSpeech'
             | 'sexuallyExplicit'
             | 'dangerousContent'
+            | 'modelType'
         >
     > {
     conversationId: string
@@ -26,6 +27,7 @@ export interface IConversation
 
 export interface ChatState {
     requestInQueueFetching: boolean
-
     conversationList: IConversation[]
+    imageResourceList: IImageItem[]
+    inputImageList: IImageItem[]
 }

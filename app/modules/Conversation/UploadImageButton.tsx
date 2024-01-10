@@ -1,6 +1,8 @@
 'use client'
 import React, { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { imageSizeLimition } from '@/app/shared/constants'
+import { useAppDispatch } from '@/app/hooks'
+import { addImageToInput } from '@/app/(pages)/chat/slice'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,6 +16,7 @@ import {
 } from '@/app/components/ui/alert-dialog'
 
 const UploadImageButton: React.FC = () => {
+    const dispatch = useAppDispatch()
     const [alertText, setAlertText] = useState('')
     const inputRef = useRef<HTMLInputElement>(null)
 
@@ -39,6 +42,12 @@ const UploadImageButton: React.FC = () => {
             reader.onload = () => {
                 const base64Data = reader.result as string
                 console.log('Base64 data:', base64Data)
+                dispatch(
+                    addImageToInput({
+                        base64Content: base64Data,
+                    })
+                )
+                fileInput.value = ''
             }
             reader.readAsDataURL(file)
         }

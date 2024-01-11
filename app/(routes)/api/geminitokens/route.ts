@@ -13,12 +13,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     const body = await request.json()
-    const { history, prompt, imageParts, limit } = body || {}
+    const { history, prompt, parts, limit } = body || {}
 
     const countResponse = await getGeminiTokenCount({
         history,
         prompt,
-        imageParts,
+        parts,
         limit,
     })
     const response = NextResponse.json({ ...countResponse }, { status: 200 })

@@ -25,3 +25,13 @@ export const formatDate = (timestamp?: number, format = 'HH:mm') => {
     }
     return timestamp
 }
+
+export const getPureDataFromImageBase64 = (base64Data: string) => {
+    if (!base64Data) return base64Data
+    const checkValue = `;base64,`
+    const checkValueIndex = base64Data.indexOf(checkValue)
+    if (checkValueIndex > -1) {
+        return base64Data.substring(checkValueIndex + checkValue.length)
+    }
+    return base64Data
+}

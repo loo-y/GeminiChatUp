@@ -1,33 +1,17 @@
 'use client'
 import React, { useState, ChangeEvent, KeyboardEvent, MouseEvent, useRef } from 'react'
 import _ from 'lodash'
-import { getChatState, getGeminiChatAnswer, deleteImageFromInput } from '../../(pages)/chat/slice'
+import {
+    getChatState,
+    getGeminiChatAnswer,
+    getGeminiContentAnswer,
+    deleteImageFromInput,
+} from '../../(pages)/chat/slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { IConversation } from '../../(pages)/chat/interface'
 import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import UploadImageButton from './UploadImageButton'
-import { Button } from '@/app/components/ui/button'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/app/components/ui/dialog'
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogOverlay,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/app/components/ui/alert-dialog'
+import { Dialog, DialogContent } from '@/app/components/ui/dialog'
 
 const ChatInputWithAttachment = ({
     conversation,
@@ -101,14 +85,27 @@ const ChatInputWithAttachment = ({
             if (_.last(_history)?.role === 'user') {
                 _history.pop() // 移除最后一条记录
             }
-            dispatch(
-                getGeminiChatAnswer({
-                    conversationId,
-                    conversation,
-                    history: _history,
-                    inputText: inputValue,
-                })
-            )
+            if (attachable) {
+                dispatch(
+                    getGeminiContentAnswer({
+                        inputImageList,
+                        conversationId,
+                        conversation,
+                        history: _history,
+                        inputText: inputValue,
+                    })
+                )
+            } else {
+                dispatch(
+                    getGeminiChatAnswer({
+                        conversationId,
+                        conversation,
+                        history: _history,
+                        inputText: inputValue,
+                    })
+                )
+            }
+
             setInputValue('')
             setInputRows(1)
         }
@@ -246,6 +243,7 @@ const ThumbnailDisplay: React.FC<{ imageUrl: string; onDelete: () => void }> = (
             }, 100)
         }
     }
+
     return (
         <>
             <div

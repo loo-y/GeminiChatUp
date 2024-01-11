@@ -1,4 +1,4 @@
-import { HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
+import { HarmCategory, HarmBlockThreshold, Part } from '@google/generative-ai'
 
 export enum Roles {
     user = `user`,
@@ -32,18 +32,13 @@ export interface IChatItem {
 export interface IImageItem {
     imageId: string
     base64Data: string
+    mimeType: string
     timestamp: number
-}
-export interface IImagePart {
-    inlineData: {
-        data: string
-        mimeType: string
-    }
 }
 
 export interface IGeminiTokenCountProps {
     prompt?: string
-    imageParts?: IImagePart[]
+    parts?: Part[]
     history?: Pick<IChatItem, 'role' | 'parts'>[]
     limit?: number
 }

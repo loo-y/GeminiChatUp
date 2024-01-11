@@ -7,10 +7,10 @@ import { ChatState, IConversation } from './interface'
 import { map as _map } from 'lodash'
 import type { AsyncThunk } from '@reduxjs/toolkit'
 import _ from 'lodash'
-import { IChatItem, Roles, GeminiModel } from '@/app/shared/interfaces'
+import { IChatItem, Roles, GeminiModel, IImageItem } from '@/app/shared/interfaces'
 import { geminiChatDb } from '@/app/shared/db'
-import { HarmBlockThreshold, HarmCategory } from '@google/generative-ai'
-import { generateReversibleToken } from '@/app/shared/utils'
+import { HarmBlockThreshold, HarmCategory, Part } from '@google/generative-ai'
+import { generateReversibleToken, getPureDataFromImageBase64 } from '@/app/shared/utils'
 import { defaultConversaionName, inputTokenLimit } from '@/app/shared/constants'
 
 // define a queue to store api request
@@ -84,7 +84,109 @@ const makeApiRequestInQueue = createAsyncThunk(
 
 export const getGeminiContentAnswer = createAsyncThunk(
     'chatSlice/getGeminiContentAnswer',
-    async ({}, { dispatch, getState }: any) => {}
+    async (
+        {
+            inputImageList,
+            history,
+            inputText,
+            conversationId,
+            conversation,
+        }: {
+            history?: IChatItem[]
+            inputText: string
+            conversationId: string
+            conversation: IConversation
+        } & Pick<ChatState, 'inputImageList'>,
+        { dispatch, getState }: any
+    ) => {
+        const chatState: ChatState = getChatState(getState())
+        const { imageResourceList } = chatState || {}
+        let historyLimitTS = conversation.historyLimitTS || -1
+        const suffix = ` \n `
+        const prefix = `question: `
+        const systemText = `now we are in a conversation. and please answer in the language that i asked in question.`
+        let parts: Part[] = [
+            {
+                text: systemText,
+            },
+        ]
+        if (history?.length) {
+            _.map(history, chatItem => {
+                const { parts: chatItemParts, imageList, role } = chatItem || {}
+                const _prefix_ = role == Roles.model ? `answer: ` : prefix
+                if (imageList?.length) {
+                    _.map(imageList, imageId => {
+                        const theImage = _.find(imageResourceList, imageResource => {
+                            return imageId == imageResource?.imageId
+                        })
+                        if (theImage?.base64Data && theImage.mimeType) {
+                            const pureBase64Data = getPureDataFromImageBase64(theImage.base64Data)
+                            parts.push({
+                                inlineData: {
+                                    data: pureBase64Data,
+                                    mimeType: theImage.mimeType,
+                                },
+                            })
+                        }
+                    })
+                }
+                if (chatItemParts?.[0]?.text) {
+                    parts.push({
+                        text: _prefix_ + chatItemParts?.[0]?.text + suffix,
+                    })
+                }
+            })
+        }
+
+        let newChatItem: IChatItem = {
+            conversationId,
+            role: Roles.user,
+            parts: [{ text: inputText }],
+            timestamp: Date.now(),
+        }
+
+        if (!_.isEmpty(inputImageList)) {
+            newChatItem.imageList = _.map(inputImageList, i => {
+                parts.push({
+                    inlineData: {
+                        data: getPureDataFromImageBase64(i.base64Data),
+                        mimeType: i.mimeType,
+                    },
+                })
+                return i.imageId
+            })
+            dispatch(updateImageToStateAndDB({ inputImageList }))
+        }
+
+        parts.push({
+            text: prefix + inputText + suffix + `answer: `,
+        })
+
+        dispatch(
+            updateChatToConversation({
+                conversationId,
+                chatItem: newChatItem,
+                isFetching: true,
+            })
+        )
+
+        // ========== TODO history Limit ==========
+        // ========== TODO history Limit ==========
+
+        const { safetySettings, generationConfig } = getFetchSettingsFromConverstaion(conversation)
+
+        dispatch(
+            makeApiRequestInQueue({
+                apiRequest: fetchGeminiContent.bind(null, {
+                    parts,
+                    conversationId,
+                    generationConfig,
+                    safetySettings,
+                }),
+                asyncThunk: getGeminiContentAnswer,
+            })
+        )
+    }
 )
 
 export const getGeminiChatAnswer = createAsyncThunk(
@@ -170,46 +272,15 @@ export const getGeminiChatAnswer = createAsyncThunk(
             }
         }
 
-        const { topK, topP, temperature, maxOutputTokens, harassment, hateSpeech, dangerousContent, sexuallyExplicit } =
-            conversation || {}
-        let safetySettings = []
-        if (harassment) {
-            safetySettings.push({
-                category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-                threshold: harassment,
-            })
-        }
-        if (hateSpeech) {
-            safetySettings.push({
-                category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                threshold: hateSpeech,
-            })
-        }
-        if (dangerousContent) {
-            safetySettings.push({
-                category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                threshold: dangerousContent,
-            })
-        }
-        if (sexuallyExplicit) {
-            safetySettings.push({
-                category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                threshold: sexuallyExplicit,
-            })
-        }
+        const { safetySettings, generationConfig } = getFetchSettingsFromConverstaion(conversation)
         dispatch(
             makeApiRequestInQueue({
                 apiRequest: fetchGeminiChat.bind(null, {
                     history: historyToFetch,
                     inputText,
                     conversationId,
-                    generationConfig: {
-                        topK,
-                        topP,
-                        temperature,
-                        maxOutputTokens,
-                    },
-                    safetySettings: safetySettings,
+                    generationConfig,
+                    safetySettings,
                 }),
                 asyncThunk: getGeminiChatAnswer,
             })
@@ -217,14 +288,16 @@ export const getGeminiChatAnswer = createAsyncThunk(
     }
 )
 
-export const initialConversationListInState = createAsyncThunk(
-    'chatSlice/initialConversationListInState',
+export const initiaStateFromDB = createAsyncThunk(
+    'chatSlice/initiaStateFromDB',
     async (params, { dispatch, getState }: any) => {
         const chatState: ChatState = getChatState(getState())
         const conversationList = await initialConversionList()
+        const imageResourceList = await initialImageResoureFromDB()
         dispatch(
             updateState({
-                conversationList: conversationList,
+                conversationList,
+                imageResourceList,
             })
         )
     }
@@ -298,6 +371,14 @@ export const chatSlice = createSlice({
         updateState: (state, action: PayloadAction<Partial<ChatState>>) => {
             return { ...state, ...action.payload }
         },
+        updateImageToStateAndDB: (state, action: PayloadAction<Pick<ChatState, 'inputImageList'>>) => {
+            const { inputImageList } = action.payload || {}
+            // update Image to DB
+            updateImagesToDB({ imageList: inputImageList })
+            // update Image to state imageResourceList
+            state.imageResourceList = state.imageResourceList.concat(inputImageList)
+            state.inputImageList = []
+        },
         updateChatToConversation: (
             state,
             action: PayloadAction<{ conversationId: string; chatItem?: IChatItem; isFetching: boolean }>
@@ -311,13 +392,14 @@ export const chatSlice = createSlice({
                 isFetching,
             })
         },
-        addImageToInput: (state, action: PayloadAction<{ base64Content: string }>) => {
-            const { base64Content } = action.payload || {}
+        addImageToInput: (state, action: PayloadAction<{ base64Content: string; mimeType: string }>) => {
+            const { base64Content, mimeType } = action.payload || {}
             let currentInputImageList = _.clone(state.inputImageList) || []
             currentInputImageList.push({
                 imageId: generateReversibleToken(),
                 base64Data: base64Content,
                 timestamp: Date.now(),
+                mimeType,
             })
             state.inputImageList = currentInputImageList
         },
@@ -357,13 +439,43 @@ export const chatSlice = createSlice({
                 })
             }
             state.conversationList = conversationList
-        })
+        }),
+            builder.addCase(getGeminiContentAnswer.fulfilled, (state, action) => {
+                const { status, text, conversationId } = (action.payload as any) || {}
+                let conversationList
+                if (status && text && conversationId) {
+                    conversationList = updateChatToConversationToDB({
+                        conversationId,
+                        conversationList: state.conversationList,
+                        chatItem: {
+                            conversationId,
+                            role: Roles.model,
+                            parts: [{ text }],
+                            timestamp: Date.now(),
+                        },
+                        isFetching: false,
+                    })
+                } else {
+                    conversationList = updateChatToConversationToDB({
+                        conversationId,
+                        conversationList: state.conversationList,
+                        isFetching: false,
+                    })
+                }
+                state.conversationList = conversationList
+            })
     },
 })
 
 // export actions
-export const { updateState, updateChatToConversation, addImageToInput, deleteImageFromInput, clearInputImageList } =
-    chatSlice.actions
+export const {
+    updateState,
+    updateChatToConversation,
+    addImageToInput,
+    deleteImageFromInput,
+    clearInputImageList,
+    updateImageToStateAndDB,
+} = chatSlice.actions
 export default chatSlice.reducer
 
 // ********** helper **********
@@ -406,6 +518,7 @@ const updateChatToConversationToDB = ({
             role: chatItem.role,
             text: chatItem.parts[0].text,
             timestamp: chatItem.timestamp || Date.now(),
+            imageList: chatItem.imageList || [],
         })
     } else {
         _.each(newConversationList, conversation => {
@@ -416,6 +529,13 @@ const updateChatToConversationToDB = ({
         })
     }
     return newConversationList
+}
+
+const updateImagesToDB = async ({ imageList }: { imageList?: IImageItem[] }) => {
+    if (!imageList?.length) return
+    _.each(imageList, async imageItem => {
+        await geminiChatDb.images.add(imageItem)
+    })
 }
 
 const updateConversationInfoToDB = async ({ conversation }: { conversation: IConversation }) => {
@@ -475,6 +595,7 @@ const initialConversionList = async () => {
                     role: chatItem.role,
                     timestamp: chatItem.timestamp,
                     parts: [{ text: chatItem.text }],
+                    imageList: chatItem?.imageList || [],
                 })
             }
         })
@@ -485,6 +606,11 @@ const initialConversionList = async () => {
             history: xhistory,
         }
     })
+}
+
+const initialImageResoureFromDB = async () => {
+    let imageResourceList = (await geminiChatDb.images.toArray()) || []
+    return imageResourceList
 }
 
 const createNewConversation = async ({
@@ -532,7 +658,59 @@ const createNewConversation = async ({
 }
 
 const removeConversationAndChatsInDB = async (conversation: IConversation) => {
-    const { conversationId } = conversation || {}
+    const { conversationId, history } = conversation || {}
+    let imageIDList: string[] = []
+    if (!history?.length) {
+        _.map(history, (chatItem: IChatItem) => {
+            if (chatItem.imageList?.length) {
+                imageIDList = imageIDList.concat(chatItem.imageList)
+            }
+        })
+    }
+
     await geminiChatDb.conversations.where('conversationId').equals(conversationId).delete()
     await geminiChatDb.chats.where('conversationId').equals(conversationId).delete()
+
+    if (!imageIDList?.length) {
+        await geminiChatDb.images.where('imageId').equals(imageIDList).delete()
+    }
+}
+
+const getFetchSettingsFromConverstaion = (conversation: IConversation) => {
+    const { topK, topP, temperature, maxOutputTokens, harassment, hateSpeech, dangerousContent, sexuallyExplicit } =
+        conversation || {}
+    let safetySettings = []
+    if (harassment) {
+        safetySettings.push({
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: harassment,
+        })
+    }
+    if (hateSpeech) {
+        safetySettings.push({
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: hateSpeech,
+        })
+    }
+    if (dangerousContent) {
+        safetySettings.push({
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: dangerousContent,
+        })
+    }
+    if (sexuallyExplicit) {
+        safetySettings.push({
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: sexuallyExplicit,
+        })
+    }
+    return {
+        safetySettings,
+        generationConfig: {
+            topK,
+            topP,
+            temperature,
+            maxOutputTokens,
+        },
+    }
 }

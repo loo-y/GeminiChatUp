@@ -95,12 +95,12 @@ export const fetchGeminiContent = async ({
     return { ...result, conversationId }
 }
 
-export const fetchTokenCount = async ({ history, prompt, imageParts, limit }: IGeminiTokenCountProps) => {
+export const fetchTokenCount = async ({ history, prompt, parts, limit }: IGeminiTokenCountProps) => {
     const jsonBody = _.omitBy(
         {
             history,
             prompt,
-            imageParts,
+            parts,
             limit,
         },
         item => {
@@ -116,7 +116,7 @@ export const fetchTokenCount = async ({ history, prompt, imageParts, limit }: IG
                 ...commonOptions,
                 body: JSON.stringify({ ...jsonBody }),
             }),
-            fetchTimeout(20),
+            fetchTimeout(30),
         ])
         if (response instanceof Response) {
             result = await response.json()

@@ -26,6 +26,7 @@ import ChatInput from './ChatInput'
 import ChatInputWithAttachment from './ChatInputWithAttachment'
 import ConversationSetting from './ConversationSetting'
 import ConversationDelete from './ConversationDelete'
+import { Dialog, DialogContent } from '@/app/components/ui/dialog'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -86,7 +87,33 @@ interface IChatContentProps {
     contentList?: IChatItem[]
 }
 const ChatContent = ({ contentList }: IChatContentProps) => {
+    const state = useAppSelector(getChatState)
+    const { imageResourceList } = state || {}
+
     const contentRef = useRef(null)
+    const [openPreview, setOpenPreview] = useState(false)
+    const [previewImage, setPreviewImage] = useState('')
+    const imagePreviewRef = useRef(null)
+    const handleClickThumbnail = (imageBase64: string) => {
+        setOpenPreview(true)
+        setPreviewImage(imageBase64)
+    }
+    const handleClosePreview = () => {
+        setOpenPreview(false)
+        setPreviewImage('')
+    }
+    const handleUnactiveClose = () => {
+        if (imagePreviewRef?.current) {
+            console.log(`handleUnactiveClose`)
+            const imagePreviewElement = imagePreviewRef.current as HTMLDivElement
+            setTimeout(() => {
+                imagePreviewElement.click()
+                imagePreviewElement.focus()
+                console.log(`imagePreviewElement`, imagePreviewElement)
+            }, 100)
+        }
+    }
+
     useEffect(() => {
         if (contentRef.current) {
             const theElement = contentRef.current as HTMLElement
@@ -104,67 +131,106 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
     }
 
     return (
-        <div
-            className="__chat_content__ relative mt-4 mb-44 pr-4 overflow-scroll w-full text-textBlackColor leading-relaxed"
-            ref={contentRef}
-        >
-            <div className="flex flex-col gap-6 w-full max-w-[73rem] mx-auto ">
-                {_.map(contentList, (contentItem, index) => {
-                    const { role, parts, timestamp } = contentItem || {}
-                    const contentText = parts[0].text
-                    return (
-                        <div
-                            className={`flex items-center flex-grow  ${
-                                role == Roles.model ? roleAiClass : roleHumanClass
-                            }`}
-                            key={`__chat_content_item_${index}__`}
-                        >
+        <>
+            <div
+                className="__chat_content__ relative mt-4 mb-44 pr-4 overflow-scroll w-full text-textBlackColor leading-relaxed"
+                ref={contentRef}
+            >
+                <div className="flex flex-col gap-6 w-full max-w-[73rem] mx-auto ">
+                    {_.map(contentList, (contentItem, index) => {
+                        const { role, parts, timestamp, imageList } = contentItem || {}
+                        const isUser = role == Roles.user
+                        const contentText = parts[0].text
+                        return (
                             <div
-                                className={`rounded-xl flex flex-col px-3 py-2 w-fit  max-w-[80%] gap-1 ${
-                                    role == Roles.model ? roleAiInnerClass : roleHumanInnerClass
+                                className={`flex items-center flex-grow  ${
+                                    role == Roles.model ? roleAiClass : roleHumanClass
                                 }`}
+                                key={`__chat_content_item_${index}__`}
                             >
-                                <ReactMarkdown
-                                    components={{
-                                        code(props) {
-                                            const { children, className, node, ...rest } = props
-                                            const match = /language-(\w+)/.exec(className || '')
-                                            return match ? (
-                                                <div className="text-sm mb-2 ">
-                                                    {/* @ts-ignore */}
-                                                    <SyntaxHighlighter
-                                                        {...rest}
-                                                        wrapLines={true}
-                                                        wrapLongLines={true}
-                                                        PreTag="div"
-                                                        language={match[1]}
-                                                        style={docco}
-                                                    >
-                                                        {String(children).replace(/\n$/, '')}
-                                                    </SyntaxHighlighter>
-                                                </div>
-                                            ) : (
-                                                <code {...rest} className={className}>
-                                                    {children}
-                                                </code>
-                                            )
-                                        },
-                                    }}
-                                >
-                                    {contentText}
-                                </ReactMarkdown>
                                 <div
-                                    className={`flex __timestamp__ text-stone-400 text-xs ${
-                                        role == Roles.model ? roleAiClass : roleHumanClass
+                                    className={`rounded-xl flex flex-col px-3 py-2 w-fit  max-w-[80%] gap-1 ${
+                                        isUser ? roleHumanInnerClass : roleAiInnerClass
                                     }`}
                                 >
-                                    {formatDate(timestamp)}
+                                    {isUser && imageList?.length ? (
+                                        <div className="flex flex-col">
+                                            {_.map(imageList, imageID => {
+                                                const theImage = _.find(imageResourceList, resource => {
+                                                    return imageID == resource.imageId
+                                                })?.base64Data
+                                                if (!theImage) return null
+                                                return (
+                                                    <div
+                                                        className="flex items-center"
+                                                        onClick={() => {
+                                                            handleClickThumbnail(theImage)
+                                                        }}
+                                                        key={`content_${index}_image_${imageID}`}
+                                                    >
+                                                        <img className="max-w-64" src={theImage} />
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    ) : null}
+                                    <ReactMarkdown
+                                        components={{
+                                            code(props) {
+                                                const { children, className, node, ...rest } = props
+                                                const match = /language-(\w+)/.exec(className || '')
+                                                return match ? (
+                                                    <div className="text-sm mb-2 ">
+                                                        {/* @ts-ignore */}
+                                                        <SyntaxHighlighter
+                                                            {...rest}
+                                                            wrapLines={true}
+                                                            wrapLongLines={true}
+                                                            PreTag="div"
+                                                            language={match[1]}
+                                                            style={docco}
+                                                        >
+                                                            {String(children).replace(/\n$/, '')}
+                                                        </SyntaxHighlighter>
+                                                    </div>
+                                                ) : (
+                                                    <code {...rest} className={className}>
+                                                        {children}
+                                                    </code>
+                                                )
+                                            },
+                                        }}
+                                    >
+                                        {contentText}
+                                    </ReactMarkdown>
+                                    <div
+                                        className={`flex __timestamp__ text-stone-400 text-xs ${
+                                            role == Roles.model ? roleAiClass : roleHumanClass
+                                        }`}
+                                    >
+                                        {formatDate(timestamp)}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )
-                })}
+                        )
+                    })}
+                </div>
             </div>
-        </div>
+            <div className="">
+                <Dialog open={openPreview}>
+                    <DialogContent
+                        className="min-w-[80vw] min-h-[80vh] max-h-[90vh] w-full bg-gray-200 border-gray-200"
+                        onInteractOutside={handleClosePreview}
+                        autoFocus={false}
+                        onEscapeKeyDown={handleClosePreview}
+                    >
+                        <div
+                            className="grid gap-4 py-4 bg-contain bg-no-repeat bg-center w-full h-full"
+                            style={{ backgroundImage: `url(${previewImage})` }}
+                        ></div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </>
     )
 }

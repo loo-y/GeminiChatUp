@@ -33,6 +33,7 @@ interface ImageItem {
     id?: number
     imageId: string
     base64Data: string
+    mimeType: string
     timestamp: number
 }
 
@@ -47,11 +48,11 @@ export class IndexedDexie extends Dexie {
 
     constructor(dbname: string) {
         super(dbname)
-        this.version(5.2).stores({
+        this.version(5.3).stores({
             conversations:
                 '++id, conversationId, conversationName, topK, topP, maxOutputTokens, temperature, harassment, hateSpeech, sexuallyExplicit, archivedTS, historyLimitTS, dangerousContent, modelAvatar, isSelected', // Primary key and indexed props
             chats: '++id, conversationId, role, text, timestamp, imageList',
-            images: '++id, imageId, base64Data, timestamp',
+            images: '++id, imageId, base64Data, mimeType, timestamp',
         })
     }
 }

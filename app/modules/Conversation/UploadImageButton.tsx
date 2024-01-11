@@ -45,6 +45,7 @@ const UploadImageButton: React.FC = () => {
                 dispatch(
                     addImageToInput({
                         base64Content: base64Data,
+                        mimeType: file.type,
                     })
                 )
                 fileInput.value = ''

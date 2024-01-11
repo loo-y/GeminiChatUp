@@ -39,6 +39,7 @@ const getGeminiResponse = async ({
 }) => {
     const modelResponse = await GeminiContent({
         prompt,
+        parts,
         generationConfig,
         safetySettings,
     })

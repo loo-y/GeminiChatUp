@@ -1,15 +1,16 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, Part } from '@google/generative-ai'
 import _ from 'lodash'
-import { ISafetySetting, IGenerationConfig, IChatItem, IGeminiTokenCountProps } from './interface'
+import { ISafetySetting, IGenerationConfig, IChatItem, IGeminiTokenCountProps, Roles } from './interface'
 import { inputTokenLimit } from '@/app/shared/constants'
+import { GeminiModel } from './interface'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
 const { GOOGLE_GEMINI_API_KEY = '' } = process.env || {}
 
-const MODEL_NAME = 'gemini-pro'
 const genAI = new GoogleGenerativeAI(GOOGLE_GEMINI_API_KEY)
-const model = genAI.getGenerativeModel({ model: MODEL_NAME })
+const model = genAI.getGenerativeModel({ model: GeminiModel.geminiPro })
+const modelProVision = genAI.getGenerativeModel({ model: GeminiModel.geminiProVision })
 
 const defaultGenerationConfig: IGenerationConfig = {
     temperature: 0.9,
@@ -110,6 +111,82 @@ export const GeminiChat = async ({
         }
         const result = await chat.sendMessage(inputText)
 
+        const response = result.response
+        return {
+            status: true,
+            text: response.text(),
+            totalTokens,
+        }
+    } catch (e) {
+        console.log(`GeminiChat error`, e)
+        error = String(e)
+    }
+
+    return {
+        status: false,
+        text: ``,
+        error,
+    }
+}
+
+interface IGeminiContentProps {
+    generationConfig?: IGenerationConfig
+    safetySettings?: ISafetySetting[]
+    prompt?: string
+    parts?: Part[]
+    isStream?: boolean
+}
+export const GeminiContent = async ({
+    generationConfig,
+    safetySettings,
+    parts,
+    isStream,
+    prompt,
+}: IGeminiContentProps) => {
+    let error = `promopt text is required.`
+    if (_.isEmpty(parts) && !prompt) {
+        return {
+            status: false,
+            text: ``,
+            error,
+        }
+    }
+
+    let inputParts: Part[]
+    if (!parts || _.isEmpty(parts)) {
+        inputParts = [
+            {
+                text: prompt || ``,
+            },
+        ]
+    } else {
+        inputParts = parts
+    }
+    const hasImage = _.some(inputParts, part => {
+        return part?.inlineData?.data && part?.inlineData?.mimeType
+    })
+
+    let params: Partial<IGeminiContentProps> & { contents: [{ role: Roles; parts: Part[] }] } = {
+        generationConfig: {
+            ...defaultGenerationConfig,
+            ...generationConfig,
+        },
+        safetySettings: _.isEmpty(safetySettings)
+            ? defaultSafetySettings
+            : _.map(defaultSafetySettings, ss => {
+                  const category = ss.category
+                  const newSS = _.find(safetySettings, category)
+                  return {
+                      ...ss,
+                      threshold: newSS?.threshold || ss.threshold,
+                  }
+              }),
+        contents: [{ role: Roles.user, parts: inputParts }],
+    }
+
+    try {
+        const result = hasImage ? await modelProVision.generateContent(params) : await model.generateContent(params)
+        const { totalTokens } = await modelProVision.countTokens(inputParts)
         const response = result.response
         return {
             status: true,

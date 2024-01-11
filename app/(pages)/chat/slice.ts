@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, original, PayloadAction } from '@reduxjs/toolkit'
 import type { AppState, AppThunk } from '@/app/store'
 import * as API from '@/app/shared/API'
-import { fetchGeminiChat, fetchTokenCount } from '@/app/shared/API'
+import { fetchGeminiChat, fetchTokenCount, fetchGeminiContent } from '@/app/shared/API'
 import { ChatState, IConversation } from './interface'
 // import _ from 'lodash' // use specific function from lodash
 import { map as _map } from 'lodash'

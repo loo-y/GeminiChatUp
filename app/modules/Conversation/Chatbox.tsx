@@ -168,7 +168,7 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                                                         }}
                                                         key={`content_${index}_image_${imageID}`}
                                                     >
-                                                        <img className="max-w-64 " src={theImage} />
+                                                        <img className=" max-w-[15rem]" src={theImage} />
                                                     </div>
                                                 )
                                             })}

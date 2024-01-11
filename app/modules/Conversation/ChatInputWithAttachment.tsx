@@ -279,7 +279,7 @@ const ThumbnailDisplay: React.FC<{ imageUrl: string; onDelete: () => void }> = (
             <div className="">
                 <Dialog open={openPreview}>
                     <DialogContent
-                        className="min-w-[80vw] min-h-[80vh] max-h-[90vh] w-full bg-gray-200 border-gray-200"
+                        className="min-w-[80vw] min-h-[80vh] max-h-[90vh] w-full bg-gray-200 border-gray-200 active:outline-none focus:outline-none"
                         onOpenAutoFocus={handleUnactiveClose}
                         onInteractOutside={handleClosePreview}
                         autoFocus={false}

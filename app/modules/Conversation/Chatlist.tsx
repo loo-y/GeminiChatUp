@@ -6,6 +6,7 @@ import _ from 'lodash'
 import { IChatItem, Roles } from '@/app/shared/interfaces'
 import { formatDate } from '@/app/shared/utils'
 import { IConversation } from '@/app/(pages)/chat/interface'
+import TopMenu from './TopMenu'
 
 const ChatList = () => {
     const dispatch = useAppDispatch()
@@ -17,15 +18,16 @@ const ChatList = () => {
     return (
         <div className="__chatlist__ flex w-full mt-0">
             <div className="__chatlist_topsetting__ w-full flex flex-col text-textBlackColor">
-                <div className="flex flex-row mx-4 gap-4 h-16 items-center">
-                    <div className="__add_new_chat__ flex items-center mx-[0.5px] active:mr-[-.05px]">
+                <div className="flex flex-row mx-4 gap-4 h-16 items-center border-b">
+                    <TopMenu />
+                    {/* <div className="__add_new_chat__ flex items-center mx-[0.5px] active:mr-[-.05px]">
                         <img
                             src={'/images/plus.svg'}
                             className="h-6 w-6 cursor-pointer  shadow-lg shadow-transparent hover:shadow-white-600/50 active:shadow-transparent-400/50 active:mt-[0.5px] active:ml-[0.5px]"
                             onClick={handleAddNewConsation}
                         />
                     </div>
-                    <SearchInput />
+                    <SearchInput /> */}
                 </div>
 
                 <ConversationList />

@@ -27,6 +27,7 @@ import ChatInputWithAttachment from './ChatInputWithAttachment'
 import ConversationSetting from './ConversationSetting'
 import ConversationDelete from './ConversationDelete'
 import { Dialog, DialogContent } from '@/app/components/ui/dialog'
+import { GeminiModel } from '@/app/shared/interfaces'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -40,7 +41,7 @@ const ChatBox = () => {
             }) || state.conversationList[0]
         )
     }, [state.conversationList])
-    const { history, conversationId, modelAvatar, conversationName, isFetching } = conversation || {}
+    const { history, conversationId, modelAvatar, conversationName, isFetching, modelType } = conversation || {}
 
     return (
         <div className="__chatbox__ flex flex-col text-stone-900 bg-[#fafafa]">
@@ -69,10 +70,10 @@ const ChatBox = () => {
             </div>
             <div className="flex flex-grow overflow-auto relative chatinfo rounded-br-lg md:ml-12 md:mr-8 ml-4 mr-0">
                 <ChatContent contentList={history} />
-                {queryInputValue == `attachment` ? (
+                {modelType == GeminiModel.geminiProVision ? (
                     <ChatInputWithAttachment conversation={conversation} attachable={true} />
                 ) : (
-                    <ChatInput conversation={conversation} />
+                    <ChatInputWithAttachment conversation={conversation} attachable={false} />
                 )}
                 {/* <ChatInput conversation={conversation} /> */}
                 {/* <ChatInputWithAttachment conversation={conversation} /> */}

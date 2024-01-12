@@ -156,9 +156,9 @@ const ChatInputWithAttachment = ({
                 ) : null}
                 <div className="__chatinput_with_attachment__ relative flex">
                     <div className="overflow-y-scroll overflow-x-hidden bg-transparent flex flex-row gap-1 flex-grow max-w-[73rem] mx-auto">
-                        <div className="flex w-10 items-end ">
-                            <div className=" flex ">
-                                <div className="svg-image flex h-[3.75rem] w-8 overflow-hidden items-center justify-center cursor-pointer">
+                        <div className="flex w-12 items-center ">
+                            <div className=" flex items-center justify-center h-[3.75rem] w-[3.75rem]">
+                                <div className="svg-image flex h-[3rem] w-[3rem] overflow-hidden items-center justify-center cursor-pointer hover:bg-gray-200 rounded-full">
                                     <img src={'/images/clear.svg'} className="h-7 w-7 " />
                                 </div>
                             </div>

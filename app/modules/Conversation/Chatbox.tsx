@@ -34,16 +34,23 @@ const ChatBox = () => {
     const state = useAppSelector(getChatState)
     const searchParams = useSearchParams()
     const queryInputValue = searchParams.get('input') || ``
-    const conversation = useMemo((): IConversation => {
-        return (
-            _.find(state.conversationList, conversation => {
-                return conversation.isSelected == true
-            }) || state.conversationList[0]
-        )
+    const conversation = useMemo((): IConversation | undefined => {
+        return _.find(state.conversationList, conversation => {
+            return conversation.isSelected == true
+        })
     }, [state.conversationList])
     const { history, archived, conversationId, modelAvatar, conversationName, isFetching, modelType } =
         conversation || {}
 
+    if (!conversation) {
+        return (
+            <div className="__chatbox__ flex flex-col text-stone-900 bg-[#fafafa]">
+                <div className="flex-none title h-16 flex border-b border-[#eee] border-solid rounded-tr-lg bg-white">
+                    <div className=" flex flex-row items-center ml-4 w-full"></div>
+                </div>
+            </div>
+        )
+    }
     return (
         <div className="__chatbox__ flex flex-col text-stone-900 bg-[#fafafa]">
             <div className="flex-none title h-16 flex border-b border-[#eee] border-solid rounded-tr-lg bg-white">

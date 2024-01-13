@@ -616,8 +616,8 @@ const updateConversationInfoToDB = async ({ conversation }: { conversation: Part
 const updateConversationListToDB = async ({ conversationList }: { conversationList: Partial<DBConversation>[] }) => {
     const length = conversationList.length
     for (let i = 0; i < length; i++) {
-        const theConversation = conversationList[i]
-        const { conversationId } = theConversation
+        let theConversation = conversationList[i]
+        let conversationId = theConversation.conversationId
         const theConversationInDB = await geminiChatDb.conversations.get({ conversationId })
         if (theConversationInDB?.id) {
             await geminiChatDb.conversations.update(theConversationInDB.id, { ...theConversation })
@@ -645,6 +645,7 @@ const initialConversionList = async () => {
             historyLimitTS: -1,
             archivedTS: -1,
             modelType: GeminiModel.geminiPro,
+            isSelected: true,
         }
 
         await geminiChatDb.conversations.add(newConversationItem)
@@ -656,9 +657,11 @@ const initialConversionList = async () => {
     let xhistory: IChatItem[] = [],
         xarchived: IChatItem[] = []
     return _.map(conversationList, c => {
+        ;(xhistory = []), (xarchived = [])
         const { archivedTS, conversationId } = c
         _.map(chats, chatItem => {
             if (chatItem?.conversationId == conversationId) {
+                console.log(`conversationId-->`, conversationId)
                 const ts = chatItem.timestamp
                 const item = {
                     conversationId: chatItem.conversationId,

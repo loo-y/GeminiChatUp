@@ -152,12 +152,10 @@ const ChatContent = ({ history, archived }: IChatContentProps) => {
                         )
                     })}
                     {archived?.length ? (
-                        <div className="flex mx-auto my-1 px-6 w-full ">
-                            <div className="flex items-center">
-                                <div className="flex-1 border-t border-gray-300"></div>
-                                <span className="px-4 text-gray-500">Context cleared</span>
-                                <div className="flex-1 border-t border-gray-300"></div>
-                            </div>
+                        <div className="flex mx-auto flex-row items-center my-1 px-6 w-full  ">
+                            <div className="flex-1 border-t border-gray-300"></div>
+                            <span className="px-4 text-gray-500">Context cleared</span>
+                            <div className="flex-1 border-t border-gray-300"></div>
                         </div>
                     ) : null}
                     {_.map(history, (contentItem, index) => {

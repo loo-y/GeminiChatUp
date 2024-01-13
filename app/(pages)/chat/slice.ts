@@ -373,12 +373,15 @@ export const chatSlice = createSlice({
             let { conversationId } = conversation || {}
             let newConversationList = _.clone(state.conversationList || [])
             let conversationListToDB: Partial<DBConversation>[] = []
-            _.each(newConversationList, c => {
-                c.isSelected = c.conversationId == conversationId
+            newConversationList = _.map(newConversationList, c => {
                 const { history, archived, isFetching, ...rest } = c || {}
                 conversationListToDB.push({
                     ...rest,
                 })
+                return {
+                    ...c,
+                    isSelected: c.conversationId == conversationId,
+                }
             })
             updateConversationListToDB({
                 conversationList: conversationListToDB,

@@ -375,12 +375,14 @@ export const chatSlice = createSlice({
             let conversationListToDB: Partial<DBConversation>[] = []
             newConversationList = _.map(newConversationList, c => {
                 const { history, archived, isFetching, ...rest } = c || {}
+                const isSelected = c.conversationId == conversationId
                 conversationListToDB.push({
                     ...rest,
+                    isSelected,
                 })
                 return {
                     ...c,
-                    isSelected: c.conversationId == conversationId,
+                    isSelected,
                 }
             })
             updateConversationListToDB({

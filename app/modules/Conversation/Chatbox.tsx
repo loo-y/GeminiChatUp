@@ -11,7 +11,7 @@ import {
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
 import { useSearchParams } from 'next/navigation'
 import { IConversation } from '../../(pages)/chat/interface'
-import { IChatItem } from '@/app/shared/interfaces'
+import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import ReactMarkdown from 'react-markdown'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
@@ -41,7 +41,8 @@ const ChatBox = () => {
             }) || state.conversationList[0]
         )
     }, [state.conversationList])
-    const { history, conversationId, modelAvatar, conversationName, isFetching, modelType } = conversation || {}
+    const { history, archived, conversationId, modelAvatar, conversationName, isFetching, modelType } =
+        conversation || {}
 
     return (
         <div className="__chatbox__ flex flex-col text-stone-900 bg-[#fafafa]">
@@ -69,7 +70,7 @@ const ChatBox = () => {
                 </div>
             </div>
             <div className="flex flex-grow overflow-auto relative chatinfo rounded-br-lg md:ml-12 md:mr-8 ml-4 mr-0">
-                <ChatContent contentList={history} />
+                <ChatContent history={history} archived={archived} />
                 {modelType == GeminiModel.geminiProVision ? (
                     <ChatInputWithAttachment conversation={conversation} attachable={true} />
                 ) : (
@@ -85,9 +86,10 @@ const ChatBox = () => {
 export default ChatBox
 
 interface IChatContentProps {
-    contentList?: IChatItem[]
+    history?: IChatItem[]
+    archived?: IChatItem[]
 }
-const ChatContent = ({ contentList }: IChatContentProps) => {
+const ChatContent = ({ history, archived }: IChatContentProps) => {
     const state = useAppSelector(getChatState)
     const { imageResourceList } = state || {}
 
@@ -120,14 +122,14 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
             const theElement = contentRef.current as HTMLElement
             theElement.scrollTo(0, theElement.scrollHeight)
         }
-    }, [contentList])
+    }, [archived, history])
 
     const roleAiClass = ` justify-start italic`,
         roleHumanClass = ` justify-end text-white italic`
     const roleAiInnerClass = ` bg-lightWhite not-italic`,
         roleHumanInnerClass = ` bg-lightGreen text-teal-50 not-italic `
 
-    if (_.isEmpty(contentList)) {
+    if (_.isEmpty(history) && _.isEmpty(archived)) {
         return <div className="__chat_content__ flex"></div>
     }
 
@@ -138,81 +140,27 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                 ref={contentRef}
             >
                 <div className="flex flex-col gap-6 w-full max-w-[73rem] mx-auto ">
-                    {_.map(contentList, (contentItem, index) => {
-                        const { role, parts, timestamp, imageList } = contentItem || {}
-                        const isUser = role == Roles.user
-                        const contentText = parts[0].text
+                    {_.map(archived, (contentItem, index) => {
                         return (
-                            <div
-                                className={`flex items-center flex-grow  ${
-                                    role == Roles.model ? roleAiClass : roleHumanClass
-                                }`}
-                                key={`__chat_content_item_${index}__`}
-                            >
-                                <div
-                                    className={`rounded-xl flex flex-col px-3 py-2 w-fit  max-w-[80%] gap-1 ${
-                                        isUser ? roleHumanInnerClass : roleAiInnerClass
-                                    }`}
-                                >
-                                    {isUser && imageList?.length ? (
-                                        <div className="flex flex-col">
-                                            {_.map(imageList, imageID => {
-                                                const theImage = _.find(imageResourceList, resource => {
-                                                    return imageID == resource.imageId
-                                                })?.base64Data
-                                                if (!theImage) return null
-                                                return (
-                                                    <div
-                                                        className="flex items-center"
-                                                        onClick={() => {
-                                                            handleClickThumbnail(theImage)
-                                                        }}
-                                                        key={`content_${index}_image_${imageID}`}
-                                                    >
-                                                        <img className=" max-w-[15rem]" src={theImage} />
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    ) : null}
-                                    <ReactMarkdown
-                                        components={{
-                                            code(props) {
-                                                const { children, className, node, ...rest } = props
-                                                const match = /language-(\w+)/.exec(className || '')
-                                                return match ? (
-                                                    <div className="text-sm mb-2 ">
-                                                        {/* @ts-ignore */}
-                                                        <SyntaxHighlighter
-                                                            {...rest}
-                                                            wrapLines={true}
-                                                            wrapLongLines={true}
-                                                            PreTag="div"
-                                                            language={match[1]}
-                                                            style={docco}
-                                                        >
-                                                            {String(children).replace(/\n$/, '')}
-                                                        </SyntaxHighlighter>
-                                                    </div>
-                                                ) : (
-                                                    <code {...rest} className={className}>
-                                                        {children}
-                                                    </code>
-                                                )
-                                            },
-                                        }}
-                                    >
-                                        {contentText}
-                                    </ReactMarkdown>
-                                    <div
-                                        className={`flex __timestamp__ text-stone-400 text-xs ${
-                                            role == Roles.model ? roleAiClass : roleHumanClass
-                                        }`}
-                                    >
-                                        {formatDate(timestamp)}
-                                    </div>
-                                </div>
-                            </div>
+                            <React.Fragment key={`__chat_content_archived_item_${index}__`}>
+                                <ChatContentItem
+                                    contentItem={contentItem}
+                                    imageResourceList={imageResourceList}
+                                    handleClickThumbnail={handleClickThumbnail}
+                                />
+                            </React.Fragment>
+                        )
+                    })}
+                    {archived?.length ? <div className="flex mx-auto my-1 w-20 border border-gray-200"></div> : null}
+                    {_.map(history, (contentItem, index) => {
+                        return (
+                            <React.Fragment key={`__chat_content_history_item_${index}__`}>
+                                <ChatContentItem
+                                    contentItem={contentItem}
+                                    imageResourceList={imageResourceList}
+                                    handleClickThumbnail={handleClickThumbnail}
+                                />
+                            </React.Fragment>
                         )
                     })}
                 </div>
@@ -233,5 +181,92 @@ const ChatContent = ({ contentList }: IChatContentProps) => {
                 </Dialog>
             </div>
         </>
+    )
+}
+
+const ChatContentItem = ({
+    contentItem,
+    imageResourceList,
+    handleClickThumbnail,
+}: {
+    contentItem: IChatItem
+    imageResourceList: IImageItem[]
+    handleClickThumbnail: (imageBase64: string) => void
+}) => {
+    const { role, parts, timestamp, imageList } = contentItem || {}
+    const isUser = role == Roles.user
+    const contentText = parts[0].text
+
+    const roleAiClass = ` justify-start italic`,
+        roleHumanClass = ` justify-end text-white italic`
+    const roleAiInnerClass = ` bg-lightWhite not-italic`,
+        roleHumanInnerClass = ` bg-lightGreen text-teal-50 not-italic `
+
+    return (
+        <div className={`flex items-center flex-grow  ${role == Roles.model ? roleAiClass : roleHumanClass}`}>
+            <div
+                className={`rounded-xl flex flex-col px-3 py-2 w-fit  max-w-[80%] gap-1 ${
+                    isUser ? roleHumanInnerClass : roleAiInnerClass
+                }`}
+            >
+                {isUser && imageList?.length ? (
+                    <div className="flex flex-col">
+                        {_.map(imageList, imageID => {
+                            const theImage = _.find(imageResourceList, resource => {
+                                return imageID == resource.imageId
+                            })?.base64Data
+                            if (!theImage) return null
+                            return (
+                                <div
+                                    className="flex items-center"
+                                    onClick={() => {
+                                        handleClickThumbnail(theImage)
+                                    }}
+                                    key={`content_image_${imageID}`}
+                                >
+                                    <img className=" max-w-[15rem]" src={theImage} />
+                                </div>
+                            )
+                        })}
+                    </div>
+                ) : null}
+                <ReactMarkdown
+                    components={{
+                        code(props) {
+                            const { children, className, node, ...rest } = props
+                            const match = /language-(\w+)/.exec(className || '')
+                            return match ? (
+                                <div className="text-sm mb-2 ">
+                                    {/* @ts-ignore */}
+                                    <SyntaxHighlighter
+                                        {...rest}
+                                        wrapLines={true}
+                                        wrapLongLines={true}
+                                        PreTag="div"
+                                        language={match[1]}
+                                        style={docco}
+                                    >
+                                        {String(children).replace(/\n$/, '')}
+                                    </SyntaxHighlighter>
+                                </div>
+                            ) : (
+                                <code {...rest} className={className}>
+                                    {children}
+                                </code>
+                            )
+                        },
+                    }}
+                >
+                    {contentText}
+                </ReactMarkdown>
+                <div
+                    className={`flex __timestamp__ text-stone-400 text-xs ${
+                        role == Roles.model ? roleAiClass : roleHumanClass
+                    }`}
+                >
+                    {formatDate(timestamp)}
+                </div>
+            </div>
+        </div>
     )
 }

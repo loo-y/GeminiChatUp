@@ -1,7 +1,7 @@
 import Dexie, { Table } from 'dexie'
 import { Roles, GeminiModel } from '../interfaces'
 import { HarmBlockThreshold } from '@google/generative-ai'
-export interface Conversation {
+export interface DBConversation {
     id?: number
     conversationId: string
     conversationName: string
@@ -20,7 +20,7 @@ export interface Conversation {
     historyLimitTS: number
 }
 
-interface ChatItem {
+interface DBChatItem {
     id?: number
     conversationId: string
     role: Roles
@@ -29,7 +29,7 @@ interface ChatItem {
     imageList?: string[]
 }
 
-interface ImageItem {
+interface DBImageItem {
     id?: number
     imageId: string
     base64Data: string
@@ -40,11 +40,11 @@ interface ImageItem {
 export class IndexedDexie extends Dexie {
     // 'friends' is added by dexie when declaring the stores()
     // We just tell the typing system this is the case
-    conversations!: Table<Conversation>
+    conversations!: Table<DBConversation>
 
-    chats!: Table<ChatItem>
+    chats!: Table<DBChatItem>
 
-    images!: Table<ImageItem>
+    images!: Table<DBImageItem>
 
     constructor(dbname: string) {
         super(dbname)

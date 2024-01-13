@@ -8,7 +8,7 @@ import { map as _map } from 'lodash'
 import type { AsyncThunk } from '@reduxjs/toolkit'
 import _ from 'lodash'
 import { IChatItem, Roles, GeminiModel, IImageItem } from '@/app/shared/interfaces'
-import { geminiChatDb } from '@/app/shared/db'
+import { geminiChatDb, DBConversation } from '@/app/shared/db'
 import { HarmBlockThreshold, HarmCategory, Part } from '@google/generative-ai'
 import { generateReversibleToken, getPureDataFromImageBase64 } from '@/app/shared/utils'
 import { defaultConversaionName, inputTokenLimit } from '@/app/shared/constants'
@@ -326,7 +326,10 @@ export const updateConversationInfo = createAsyncThunk(
         const chatState: ChatState = getChatState(getState())
         const { conversationId } = conversation || {}
         let newConversationList = _.clone(chatState.conversationList || [])
-        await updateConversationInfoToDB({ conversation })
+        const { archived, history, isFetching, ...others } = conversation || {}
+        await updateConversationInfoToDB({
+            conversation: { ...others },
+        })
 
         const index = _.findIndex(newConversationList, { conversationId })
         if (index !== -1) {
@@ -365,6 +368,33 @@ export const chatSlice = createSlice({
     name: 'chatSlice',
     initialState,
     reducers: {
+        archiveConversationHistory: (state, action: PayloadAction<IConversation>) => {
+            const conversation = action.payload
+            let { conversationId, history, archived, isFetching, ...others } = conversation || {}
+            const historyLength = history && history.length
+            if (conversationId && historyLength) {
+                // for ts
+                history = history as IChatItem[]
+                const lastHistory = history[historyLength - 1]
+                let newConversationList = _.clone(state.conversationList || [])
+                const index = _.findIndex(newConversationList, { conversationId })
+                if (index !== -1) {
+                    newConversationList[index] = _.assign({}, newConversationList[index], {
+                        ...conversation,
+                        archived: (archived || []).concat([...history]),
+                        history: [],
+                    })
+                }
+                updateConversationInfoToDB({
+                    conversation: {
+                        conversationId,
+                        ...others,
+                        archivedTS: lastHistory?.timestamp || -1,
+                    },
+                })
+                state.conversationList = newConversationList
+            }
+        },
         setRequestInQueueFetching: (state, action: PayloadAction<boolean>) => {
             state.requestInQueueFetching = action.payload
         },
@@ -475,6 +505,7 @@ export const {
     deleteImageFromInput,
     clearInputImageList,
     updateImageToStateAndDB,
+    archiveConversationHistory,
 } = chatSlice.actions
 export default chatSlice.reducer
 
@@ -538,7 +569,7 @@ const updateImagesToDB = async ({ imageList }: { imageList?: IImageItem[] }) => 
     })
 }
 
-const updateConversationInfoToDB = async ({ conversation }: { conversation: IConversation }) => {
+const updateConversationInfoToDB = async ({ conversation }: { conversation: Partial<DBConversation> }) => {
     const { conversationId } = conversation || {}
     let newConversationList = await geminiChatDb.conversations.toArray()
     const index = _.findIndex(newConversationList, { conversationId })
@@ -550,7 +581,9 @@ const updateConversationInfoToDB = async ({ conversation }: { conversation: ICon
         const theConversationInDB = await geminiChatDb.conversations.get({ conversationId })
         if (theConversationInDB?.id) {
             // 不存在于 db 中
+            // @ts-ignore
             delete conversation.history
+            // @ts-ignore
             delete conversation.isFetching
             await geminiChatDb.conversations.update(theConversationInDB.id, { ...conversation })
         }
@@ -585,18 +618,25 @@ const initialConversionList = async () => {
 
     let chats = await geminiChatDb.chats.toArray()
 
-    let xhistory: IChatItem[]
+    let xhistory: IChatItem[] = [],
+        xarchived: IChatItem[] = []
     return _.map(conversationList, c => {
-        xhistory = []
+        const { archivedTS, conversationId } = c
         _.map(chats, chatItem => {
-            if (chatItem?.conversationId == c?.conversationId) {
-                xhistory.push({
+            if (chatItem?.conversationId == conversationId) {
+                const ts = chatItem.timestamp
+                const item = {
                     conversationId: chatItem.conversationId,
                     role: chatItem.role,
                     timestamp: chatItem.timestamp,
                     parts: [{ text: chatItem.text }],
                     imageList: chatItem?.imageList || [],
-                })
+                }
+                if (archivedTS > ts) {
+                    xarchived.push(item)
+                } else {
+                    xhistory.push(item)
+                }
             }
         })
 
@@ -604,6 +644,7 @@ const initialConversionList = async () => {
             ...c,
             isFetching: false,
             history: xhistory,
+            archived: xarchived,
         }
     })
 }

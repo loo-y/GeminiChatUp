@@ -1,9 +1,9 @@
 import { IChatItem, IImageItem } from '@/app/shared/interfaces'
-import type { Conversation } from '@/app/shared/db'
+import type { DBConversation } from '@/app/shared/db'
 export interface IConversation
     extends Partial<
         Pick<
-            Conversation,
+            DBConversation,
             | 'conversationName'
             | 'historyLimitTS'
             | 'temperature'

@@ -632,7 +632,7 @@ const initialConversionList = async () => {
                     parts: [{ text: chatItem.text }],
                     imageList: chatItem?.imageList || [],
                 }
-                if (archivedTS > ts) {
+                if (archivedTS >= ts) {
                     xarchived.push(item)
                 } else {
                     xhistory.push(item)

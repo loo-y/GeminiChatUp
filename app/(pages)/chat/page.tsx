@@ -33,7 +33,12 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
     return (
         <main className="main h-full overflow-hidden">
             <ResizablePanelGroup direction="horizontal">
-                <ResizablePanel maxSize={25} defaultSize={20} minSize={10} className="hidden md:block max-w-[30rem]">
+                <ResizablePanel
+                    maxSize={40}
+                    defaultSize={20}
+                    minSize={10}
+                    className="hidden md:block min-w-[18rem] max-w-[26rem]"
+                >
                     <ChatList />
                 </ResizablePanel>
                 <ResizableHandle withHandle />

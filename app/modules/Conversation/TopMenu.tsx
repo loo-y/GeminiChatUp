@@ -27,7 +27,7 @@ const TopMenu = () => {
         <div className="flex">
             <DropdownMenu>
                 <DropdownMenuTrigger>
-                    <div className="font-bold">Add New</div>
+                    <div className="font-bold">Create new</div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="ml-4">
                     <DropdownMenuItem onClick={handleAddProConsation}>Pro Conversation</DropdownMenuItem>

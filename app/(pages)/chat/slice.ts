@@ -368,6 +368,23 @@ export const chatSlice = createSlice({
     name: 'chatSlice',
     initialState,
     reducers: {
+        updateSelectConversation: (state, action: PayloadAction<IConversation>) => {
+            const conversation = action.payload
+            let { conversationId } = conversation || {}
+            let newConversationList = _.clone(state.conversationList || [])
+            let conversationListToDB: Partial<DBConversation>[] = []
+            _.each(newConversationList, c => {
+                c.isSelected = c.conversationId == conversationId
+                const { history, archived, isFetching, ...rest } = c || {}
+                conversationListToDB.push({
+                    ...rest,
+                })
+            })
+            updateConversationListToDB({
+                conversationList: conversationListToDB,
+            })
+            state.conversationList = newConversationList
+        },
         archiveConversationHistory: (state, action: PayloadAction<IConversation>) => {
             const conversation = action.payload
             let { conversationId, history, archived, isFetching, ...others } = conversation || {}
@@ -506,6 +523,7 @@ export const {
     clearInputImageList,
     updateImageToStateAndDB,
     archiveConversationHistory,
+    updateSelectConversation,
 } = chatSlice.actions
 export default chatSlice.reducer
 
@@ -586,6 +604,18 @@ const updateConversationInfoToDB = async ({ conversation }: { conversation: Part
             // @ts-ignore
             delete conversation.isFetching
             await geminiChatDb.conversations.update(theConversationInDB.id, { ...conversation })
+        }
+    }
+}
+
+const updateConversationListToDB = async ({ conversationList }: { conversationList: Partial<DBConversation>[] }) => {
+    const length = conversationList.length
+    for (let i = 0; i < length; i++) {
+        const theConversation = conversationList[i]
+        const { conversationId } = theConversation
+        const theConversationInDB = await geminiChatDb.conversations.get({ conversationId })
+        if (theConversationInDB?.id) {
+            await geminiChatDb.conversations.update(theConversationInDB.id, { ...theConversation })
         }
     }
 }

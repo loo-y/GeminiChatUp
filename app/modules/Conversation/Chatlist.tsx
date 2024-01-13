@@ -1,7 +1,12 @@
 'use client'
 import 'react'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import { getChatState, createNewConversationInState, updateState } from '../../(pages)/chat/slice'
+import {
+    getChatState,
+    createNewConversationInState,
+    updateState,
+    updateSelectConversation,
+} from '../../(pages)/chat/slice'
 import _ from 'lodash'
 import { IChatItem, Roles } from '@/app/shared/interfaces'
 import { formatDate } from '@/app/shared/utils'
@@ -51,21 +56,26 @@ const ConversationList = () => {
     const isSlectedConversationClass = `bg-stone-100`
     const handleSelectConversation = (theConversation: IConversation) => {
         dispatch(
-            updateState({
-                conversationList: _.map(conversationList, c => {
-                    if (c.conversationId == theConversation.conversationId) {
-                        return {
-                            ...c,
-                            isSelected: true,
-                        }
-                    }
-                    return {
-                        ...c,
-                        isSelected: false,
-                    }
-                }),
+            updateSelectConversation({
+                ...theConversation,
             })
         )
+        // dispatch(
+        //     updateState({
+        //         conversationList: _.map(conversationList, c => {
+        //             if (c.conversationId == theConversation.conversationId) {
+        //                 return {
+        //                     ...c,
+        //                     isSelected: true,
+        //                 }
+        //             }
+        //             return {
+        //                 ...c,
+        //                 isSelected: false,
+        //             }
+        //         }),
+        //     })
+        // )
     }
     return (
         <div className="__conversationlist__ flex flex-col mt-3 gap-3">

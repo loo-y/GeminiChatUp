@@ -93,10 +93,10 @@ export const getGeminiContentAnswer = createAsyncThunk(
             conversation,
         }: {
             history?: IChatItem[]
-            inputText: string
+            inputText?: string
             conversationId: string
             conversation: IConversation
-        } & Pick<ChatState, 'inputImageList'>,
+        } & Partial<Pick<ChatState, 'inputImageList'>>,
         { dispatch, getState }: any
     ) => {
         const chatState: ChatState = getChatState(getState())
@@ -111,6 +111,17 @@ export const getGeminiContentAnswer = createAsyncThunk(
             },
         ]
         if (history?.length) {
+            // 移除重复的
+            history = _.reduce(
+                history,
+                (result: IChatItem[], item: IChatItem) => {
+                    if (result.length === 0 || item.role !== _.last(result)?.role) {
+                        result.push(item)
+                    }
+                    return result
+                },
+                []
+            )
             _.map(history, chatItem => {
                 const { parts: chatItemParts, imageList, role } = chatItem || {}
                 const _prefix_ = role == Roles.model ? `answer: ` : prefix
@@ -138,37 +149,51 @@ export const getGeminiContentAnswer = createAsyncThunk(
             })
         }
 
-        let newChatItem: IChatItem = {
-            conversationId,
-            role: Roles.user,
-            parts: [{ text: inputText }],
-            timestamp: Date.now(),
-        }
-
-        if (!_.isEmpty(inputImageList)) {
-            newChatItem.imageList = _.map(inputImageList, i => {
-                parts.push({
-                    inlineData: {
-                        data: getPureDataFromImageBase64(i.base64Data),
-                        mimeType: i.mimeType,
-                    },
-                })
-                return i.imageId
-            })
-            dispatch(updateImageToStateAndDB({ inputImageList }))
-        }
-
-        parts.push({
-            text: prefix + inputText + suffix + `answer: `,
-        })
-
-        dispatch(
-            updateChatToConversation({
+        if (inputText) {
+            let newChatItem: IChatItem = {
                 conversationId,
-                chatItem: newChatItem,
-                isFetching: true,
+                role: Roles.user,
+                parts: [{ text: inputText }],
+                timestamp: Date.now(),
+            }
+
+            if (!_.isEmpty(inputImageList)) {
+                // for ts check
+                inputImageList = inputImageList as IImageItem[]
+                newChatItem.imageList = _.map(inputImageList, i => {
+                    parts.push({
+                        inlineData: {
+                            data: getPureDataFromImageBase64(i.base64Data),
+                            mimeType: i.mimeType,
+                        },
+                    })
+                    return i.imageId
+                })
+                dispatch(updateImageToStateAndDB({ inputImageList }))
+            }
+
+            parts.push({
+                text: prefix + inputText + suffix + `answer: `,
             })
-        )
+
+            dispatch(
+                updateChatToConversation({
+                    conversationId,
+                    chatItem: newChatItem,
+                    isFetching: true,
+                })
+            )
+        } else {
+            parts.push({
+                text: suffix + `answer: `,
+            })
+            dispatch(
+                updateChatToConversation({
+                    conversationId,
+                    isFetching: true,
+                })
+            )
+        }
 
         // ========== TODO history Limit ==========
         // ========== TODO history Limit ==========
@@ -197,25 +222,50 @@ export const getGeminiChatAnswer = createAsyncThunk(
             inputText,
             conversationId,
             conversation,
-        }: { history?: IChatItem[]; inputText: string; conversationId: string; conversation: IConversation },
+        }: { history?: IChatItem[]; inputText?: string; conversationId: string; conversation: IConversation },
         { dispatch, getState }: any
     ) => {
         const chatState: ChatState = getChatState(getState())
         let historyLimitTS = conversation.historyLimitTS || -1
-        const newChatItem = {
-            conversationId,
-            role: Roles.user,
-            parts: [{ text: inputText }],
-            timestamp: Date.now(),
-        }
 
-        dispatch(
-            updateChatToConversation({
+        let newChatItem: IChatItem | undefined = undefined
+
+        if (inputText) {
+            newChatItem = {
                 conversationId,
-                chatItem: newChatItem,
-                isFetching: true,
-            })
-        )
+                role: Roles.user,
+                parts: [{ text: inputText }],
+                timestamp: Date.now(),
+            }
+
+            dispatch(
+                updateChatToConversation({
+                    conversationId,
+                    chatItem: newChatItem,
+                    isFetching: true,
+                })
+            )
+        } else {
+            // 将原本history中的最后一条赋值给 inputText
+            const lastItem = history && history.splice(-1)
+            history = _.reduce(
+                history,
+                (result: IChatItem[], item: IChatItem) => {
+                    if (result.length === 0 || item.role !== _.last(result)?.role) {
+                        result.push(item)
+                    }
+                    return result
+                },
+                []
+            )
+            inputText = lastItem?.[0]?.parts?.[0]?.text || ''
+            dispatch(
+                updateChatToConversation({
+                    conversationId,
+                    isFetching: true,
+                })
+            )
+        }
 
         let historyToFetch: IChatItem[] = []
         if (history && !_.isEmpty(history)) {
@@ -234,10 +284,16 @@ export const getGeminiChatAnswer = createAsyncThunk(
                         role: h.role,
                         parts: h.parts,
                     }
-                }).concat({
-                    role: newChatItem.role,
-                    parts: newChatItem.parts,
-                }),
+                }).concat(
+                    newChatItem
+                        ? [
+                              {
+                                  role: newChatItem.role,
+                                  parts: newChatItem.parts,
+                              },
+                          ]
+                        : []
+                ),
                 limit,
             })
 
@@ -252,7 +308,7 @@ export const getGeminiChatAnswer = createAsyncThunk(
                         historyLimitTS = theChatItemLimit.timestamp
                         historyToFetch = historyToFetch.slice(validIndex)
                     } else {
-                        historyLimitTS = newChatItem.timestamp
+                        historyLimitTS = newChatItem?.timestamp || -1
                         historyToFetch = []
                     }
                     dispatch(updateConversationInfo({ ...conversation, historyLimitTS }))
@@ -469,7 +525,7 @@ export const chatSlice = createSlice({
     },
     extraReducers: builder => {
         builder.addCase(getGeminiChatAnswer.fulfilled, (state, action) => {
-            const { status, text, conversationId } = (action.payload as any) || {}
+            const { status, text, conversationId, error } = (action.payload as any) || {}
             let conversationList
             if (status && text && conversationId) {
                 conversationList = updateChatToConversationToDB({
@@ -487,13 +543,28 @@ export const chatSlice = createSlice({
                 conversationList = updateChatToConversationToDB({
                     conversationId,
                     conversationList: state.conversationList,
+                    fetchFailed: true,
+                    failedInfo: error,
                     isFetching: false,
                 })
             }
             state.conversationList = conversationList
         }),
+            builder.addCase(getGeminiChatAnswer.rejected, (state, action) => {
+                const { status, text, conversationId, error } = (action.payload as any) || {}
+                console.log(`getGeminiContentAnswer.rejected`)
+                let conversationList = updateChatToConversationToDB({
+                    conversationId,
+                    conversationList: state.conversationList,
+                    fetchFailed: true,
+                    failedInfo: error,
+                    isFetching: false,
+                })
+                state.conversationList = conversationList
+            }),
             builder.addCase(getGeminiContentAnswer.fulfilled, (state, action) => {
-                const { status, text, conversationId } = (action.payload as any) || {}
+                const { status, text, conversationId, error } = (action.payload as any) || {}
+                console.log(`error`, error)
                 let conversationList
                 if (status && text && conversationId) {
                     conversationList = updateChatToConversationToDB({
@@ -511,9 +582,24 @@ export const chatSlice = createSlice({
                     conversationList = updateChatToConversationToDB({
                         conversationId,
                         conversationList: state.conversationList,
+                        fetchFailed: true,
+                        failedInfo: error,
                         isFetching: false,
                     })
                 }
+                state.conversationList = conversationList
+            }),
+            builder.addCase(getGeminiContentAnswer.rejected, (state, action) => {
+                const { status, text, conversationId, error } = (action.payload as any) || {}
+                console.log(`error`, error)
+                console.log(`getGeminiContentAnswer.rejected`)
+                let conversationList = updateChatToConversationToDB({
+                    conversationId,
+                    conversationList: state.conversationList,
+                    fetchFailed: true,
+                    failedInfo: error,
+                    isFetching: false,
+                })
                 state.conversationList = conversationList
             })
     },
@@ -537,11 +623,15 @@ const updateChatToConversationToDB = ({
     conversationId,
     chatItem,
     isFetching,
+    fetchFailed,
+    failedInfo,
     conversationList,
 }: {
     conversationId: string
     chatItem?: IChatItem
     isFetching: boolean
+    fetchFailed?: boolean
+    failedInfo?: string
     conversationList: ChatState['conversationList']
 }) => {
     const newConversationList = _.clone(conversationList)
@@ -577,6 +667,15 @@ const updateChatToConversationToDB = ({
     } else {
         _.each(newConversationList, conversation => {
             if (conversation.conversationId == conversationId) {
+                const historyLength = conversation?.history?.length
+                const lastItem = historyLength && conversation?.history && conversation.history[historyLength - 1]
+                if (conversation.history && historyLength && lastItem) {
+                    conversation.history[historyLength - 1] = {
+                        ...lastItem,
+                        isFailed: fetchFailed ? true : false,
+                        failedInfo: fetchFailed ? failedInfo || '' : ``,
+                    }
+                }
                 conversation.isFetching = isFetching
                 return false
             }

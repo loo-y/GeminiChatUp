@@ -46,9 +46,17 @@ export const fetchGeminiChat = async ({
             result = await response.json()
         } else {
             console.log(`race failed`)
+            result = {
+                status: false,
+                error: `unknow expection`,
+            }
         }
     } catch (e) {
         console.log(`fetchGeminiChat error`, e)
+        result = {
+            status: false,
+            error: String(e) || `unknow expection`,
+        }
     }
 
     return { ...result, conversationId }
@@ -74,7 +82,9 @@ export const fetchGeminiContent = async ({
         _.isUndefined
     )
 
-    let result = {}
+    let result = {
+        status: true,
+    } as Record<string, any>
     try {
         const response = await Promise.race([
             fetch('/api/geminicontent', {
@@ -87,9 +97,17 @@ export const fetchGeminiContent = async ({
             result = await response.json()
         } else {
             console.log(`race failed`)
+            result = {
+                status: false,
+                error: `unknow expection`,
+            }
         }
     } catch (e) {
-        console.log(`fetchGeminiChat error`, e)
+        console.log(`fetchGeminiContent error`, e)
+        result = {
+            status: false,
+            error: String(e) || `unknow expection`,
+        }
     }
 
     return { ...result, conversationId }

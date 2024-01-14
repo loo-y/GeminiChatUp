@@ -26,6 +26,8 @@ export interface IChatItem {
     role: Roles
     parts: Record<'text', string>[]
     timestamp?: number
+    isFailed?: boolean
+    failedInfo?: string
     imageList?: string[]
 }
 

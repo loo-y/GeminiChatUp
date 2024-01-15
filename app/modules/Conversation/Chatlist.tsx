@@ -100,7 +100,7 @@ const ConversationList = ({ clickCallback }: { clickCallback?: () => void }) => 
                         }}
                     >
                         <div
-                            className={`flex flex-row gap-3 shadow rounded-3xl mx-1 py-5 pl-2 pr-4 flex-grow ${
+                            className={`flex flex-row gap-3 shadow rounded-3xl mx-1 py-5 pl-2 pr-4 flex-grow overflow-hidden ${
                                 isSelected ? isSlectedConversationClass : unSlectedConversationClass
                             }`}
                         >
@@ -111,11 +111,11 @@ const ConversationList = ({ clickCallback }: { clickCallback?: () => void }) => 
                                     </div>
                                 ) : null}
                             </div>
-                            <div className="flex flex-col gap-1 mr-3">
+                            <div className="flex flex-col gap-1 mr-3 overflow-hidden">
                                 <div className=" line-clamp-1">{conversationName}</div>
                                 {lastText && !isFetching ? (
                                     <div
-                                        className={`${isSelected ? isSlectedConversationInnerTextClass : unSlectedConversationInnerTextClass} text-sm line-clamp-1`}
+                                        className={`${isSelected ? isSlectedConversationInnerTextClass : unSlectedConversationInnerTextClass} text-sm line-clamp-1 break-words`}
                                     >
                                         {isUser ? 'You: ' : ''}
                                         {lastText.substring(0, 50)}

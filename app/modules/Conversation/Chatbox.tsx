@@ -55,8 +55,7 @@ const ChatBox = () => {
                         </div>
                     </div>
                 </div>
-
-                <CreateBy />
+                <CreatedBy />
             </div>
         )
     }
@@ -99,17 +98,17 @@ const ChatBox = () => {
                 {/* <ChatInput conversation={conversation} /> */}
                 {/* <ChatInputWithAttachment conversation={conversation} /> */}
             </div>
-            <CreateBy />
+            <CreatedBy />
         </div>
     )
 }
 
 export default ChatBox
 
-const CreateBy = () => {
+const CreatedBy = () => {
     return (
         <div className="absolute bottom-2 right-2 text-xs text-slate-400 italic">
-            Create by{' '}
+            Created by{' '}
             <a className={`text-slate-500`} target="_blank" href="https://github.com/loo-y/GeminiChatUp">
                 Erik
             </a>
@@ -289,7 +288,7 @@ const ChatContentItem = ({
                     </div>
                 ) : null}
                 <div
-                    className={`rounded-xl flex flex-col px-3 py-2 w-fit  max-w-[80%] gap-1 ${
+                    className={`rounded-xl flex flex-col px-3 py-2 w-fit  max-w-[80%] gap-1 break-words ${
                         isUser ? roleHumanInnerClass : roleAiInnerClass
                     } ${isFailed ? filedClass : ''}`}
                 >

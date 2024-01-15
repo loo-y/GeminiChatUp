@@ -13,7 +13,7 @@ import { formatDate } from '@/app/shared/utils'
 import { IConversation } from '@/app/(pages)/chat/interface'
 import TopMenu from './TopMenu'
 
-const ChatList = () => {
+const ChatList = ({ className, clickCallback }: { className?: string; clickCallback?: () => void }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     // createNewConversationInState
@@ -22,9 +22,11 @@ const ChatList = () => {
     }
     return (
         <div className="__chatlist__ flex w-full mt-0">
-            <div className="__chatlist_topsetting__ w-full flex flex-col text-textBlackColor pb-2 h-[100vh]">
+            <div
+                className={`__chatlist_topsetting__ w-full flex flex-col text-textBlackColor pb-2 h-[100vh] ${className || ''}`}
+            >
                 <div className="flex flex-row mx-4 gap-4 h-16 items-center border-b">
-                    <TopMenu />
+                    <TopMenu clickCallback={clickCallback} />
                     {/* <div className="__add_new_chat__ flex items-center mx-[0.5px] active:mr-[-.05px]">
                         <img
                             src={'/images/plus.svg'}
@@ -35,7 +37,7 @@ const ChatList = () => {
                     <SearchInput /> */}
                 </div>
 
-                <ConversationList />
+                <ConversationList clickCallback={clickCallback} />
             </div>
         </div>
     )
@@ -49,7 +51,7 @@ const SearchInput = () => {
     )
 }
 
-const ConversationList = () => {
+const ConversationList = ({ clickCallback }: { clickCallback?: () => void }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     const { conversationList } = state || {}
@@ -63,6 +65,7 @@ const ConversationList = () => {
                 ...theConversation,
             })
         )
+        clickCallback && clickCallback()
         // dispatch(
         //     updateState({
         //         conversationList: _.map(conversationList, c => {

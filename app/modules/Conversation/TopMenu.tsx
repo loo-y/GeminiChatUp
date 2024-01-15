@@ -13,14 +13,16 @@ import {
 } from '@/app/components/ui/dropdown-menu'
 import { GeminiModel } from '@/app/shared/interfaces'
 
-const TopMenu = () => {
+const TopMenu = ({ clickCallback }: { clickCallback?: () => void }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     const handleAddProConsation = () => {
         dispatch(createNewConversationInState({ modelType: GeminiModel.geminiPro }))
+        clickCallback && clickCallback()
     }
     const handleAddProVisionContext = () => {
         dispatch(createNewConversationInState({ modelType: GeminiModel.geminiProVision }))
+        clickCallback && clickCallback()
     }
 
     return (

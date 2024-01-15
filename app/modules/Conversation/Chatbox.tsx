@@ -29,6 +29,8 @@ import ConversationSetting from './ConversationSetting'
 import ConversationDelete from './ConversationDelete'
 import { Dialog, DialogContent } from '@/app/components/ui/dialog'
 import { GeminiModel } from '@/app/shared/interfaces'
+import { Drawer, DrawerContent, DrawerTrigger } from '@/app/components/ui/drawer'
+import ChatList from './Chatlist'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -58,6 +60,10 @@ const ChatBox = () => {
         <div className="__chatbox__ flex flex-col text-stone-900 bg-[#fafafa]">
             <div className="flex-none title h-16 flex border-b border-[#eee] border-solid rounded-tr-lg bg-white">
                 <div className=" flex flex-row items-center ml-4 w-full">
+                    <div className="block md:hidden mr-4">
+                        <DrawerChatList />
+                    </div>
+
                     <div className="flex-none flex-row flex w-1/2 items-center gap-4 ">
                         <div className="__conversation_avatar__ flex h-[3.25rem] w-[3.25rem] items-center justify-center bg-stone-300 rounded-full">
                             <img src={modelAvatar} className="h-12 w-12" />
@@ -353,5 +359,35 @@ const ChatContentItem = ({
                 </div>
             ) : null}
         </>
+    )
+}
+
+const DrawerChatList = () => {
+    const [openDrawer, setOpenDrawer] = useState<boolean>(false)
+    const optionsRef = useRef<HTMLDivElement>(null)
+    const handleClickOptions = () => {
+        const optionsDiv = optionsRef.current as HTMLDivElement
+        setTimeout(() => {
+            optionsDiv && optionsDiv.blur()
+        }, 0)
+    }
+    const handleCloseDrawer = () => {
+        setOpenDrawer(false)
+    }
+    return (
+        <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
+            <DrawerTrigger>
+                <div
+                    className="__conversation_avatar__ flex h-9 w-9 items-center justify-center cursor-pointer hover:bg-gray-200 hover:rounded-full"
+                    onClick={handleClickOptions}
+                    ref={optionsRef}
+                >
+                    <img src="/images/options.svg" className="h-6 w-6" />
+                </div>
+            </DrawerTrigger>
+            <DrawerContent>
+                <ChatList className="h-[70vh]" clickCallback={handleCloseDrawer} />
+            </DrawerContent>
+        </Drawer>
     )
 }

@@ -53,8 +53,10 @@ const ConversationList = () => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     const { conversationList } = state || {}
-    const isSlectedConversationClass = `bg-gray-300`
+    const isSlectedConversationClass = `bg-gray-600  text-gray-100 `
     const unSlectedConversationClass = `bg-gray-100`
+    const isSlectedConversationInnerTextClass = `text-gray-50`
+    const unSlectedConversationInnerTextClass = `text-gray-400`
     const handleSelectConversation = (theConversation: IConversation) => {
         dispatch(
             updateSelectConversation({
@@ -79,7 +81,7 @@ const ConversationList = () => {
         // )
     }
     return (
-        <div className="__conversationlist__ flex flex-col mt-3 gap-1 relative flex-1 overflow-scroll bg-white">
+        <div className="__conversationlist__ flex flex-col mt-3 gap-1 relative flex-1  overflow-scroll bg-white">
             {_.map(conversationList, (theConversation, conversationIndex) => {
                 const { conversationName, history, isSelected, modelAvatar, isFetching } = theConversation || {}
                 const lastChatItem: IChatItem | undefined = history && history[history.length - 1]
@@ -95,7 +97,7 @@ const ConversationList = () => {
                         }}
                     >
                         <div
-                            className={`flex flex-row gap-3 shadow rounded-2xl  mx-1 py-5 px-2 flex-grow ${
+                            className={`flex flex-row gap-3 shadow rounded-3xl mx-1 py-5 pl-2 pr-4 flex-grow ${
                                 isSelected ? isSlectedConversationClass : unSlectedConversationClass
                             }`}
                         >
@@ -109,7 +111,9 @@ const ConversationList = () => {
                             <div className="flex flex-col gap-1 mr-3">
                                 <div className=" line-clamp-1">{conversationName}</div>
                                 {lastText && !isFetching ? (
-                                    <div className="text-textGrayColor text-sm line-clamp-1">
+                                    <div
+                                        className={`${isSelected ? isSlectedConversationInnerTextClass : unSlectedConversationInnerTextClass} text-sm line-clamp-1`}
+                                    >
                                         {isUser ? 'You: ' : ''}
                                         {lastText.substring(0, 50)}
                                     </div>
@@ -117,7 +121,9 @@ const ConversationList = () => {
                                     <div className="text-lightGreen text-sm line-clamp-1">{`is typing...`}</div>
                                 ) : null}
                             </div>
-                            <div className="__conersation_updatetime__ flex items-center justify-end flex-grow text-xs text-stone-500">
+                            <div
+                                className={`__conersation_updatetime__ flex items-center justify-end flex-grow text-xs ${isSelected ? isSlectedConversationInnerTextClass : unSlectedConversationInnerTextClass}`}
+                            >
                                 {lastTimestamp ? <span>{formatDate(lastTimestamp)}</span> : null}
                             </div>
                         </div>

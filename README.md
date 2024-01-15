@@ -33,8 +33,8 @@ npm run dev
 ### 待完成
 
 1. 流式问答
-2. 清除之前的conversation
-3. 计算token并移除超出的conversation
+2. ~~清除之前的conversation~~ (已完成)
+3. ~~计算token并移除超出的conversation~~ (已完成)
 4. 全局设置，支持客户端引入 GeminiPro API
 5. 支持搜索对话内容
-6. 引入 GeminiPro Vision API
+6. ~~引入 GeminiPro Vision API~~ (已完成)

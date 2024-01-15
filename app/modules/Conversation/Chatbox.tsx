@@ -49,6 +49,8 @@ const ChatBox = () => {
                 <div className="flex-none title h-16 flex border-b border-[#eee] border-solid rounded-tr-lg bg-white">
                     <div className=" flex flex-row items-center ml-4 w-full"></div>
                 </div>
+
+                <CreateBy />
             </div>
         )
     }
@@ -87,11 +89,23 @@ const ChatBox = () => {
                 {/* <ChatInput conversation={conversation} /> */}
                 {/* <ChatInputWithAttachment conversation={conversation} /> */}
             </div>
+            <CreateBy />
         </div>
     )
 }
 
 export default ChatBox
+
+const CreateBy = () => {
+    return (
+        <div className="absolute bottom-2 right-2 text-xs text-slate-400 italic">
+            Create by{' '}
+            <a className={`text-slate-500`} target="_blank" href="https://github.com/loo-y/GeminiChatUp">
+                Erik
+            </a>
+        </div>
+    )
+}
 
 interface IChatContentProps {
     conversation: IConversation

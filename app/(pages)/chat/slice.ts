@@ -404,10 +404,23 @@ export const removeConversationAndChats = createAsyncThunk(
     'chatSlice/removeConversationAndChats',
     async (conversation: IConversation, { dispatch, getState }: any) => {
         const chatState: ChatState = getChatState(getState())
+        const { conversationList } = chatState
         const { conversationId } = conversation || {}
-        let newConversationList = _.clone(chatState.conversationList || [])
+        let newConversationList = _.clone(conversationList || [])
         const index = _.findIndex(newConversationList, { conversationId })
         if (index > -1) {
+            if (index > 0) {
+                newConversationList[index - 1] = {
+                    ...newConversationList[index - 1],
+                    isSelected: true,
+                }
+            } else if (index == 0 && newConversationList.length > 1) {
+                newConversationList[1] = {
+                    ...newConversationList[1],
+                    isSelected: true,
+                }
+            }
+
             newConversationList.splice(index, 1)
         }
         await removeConversationAndChatsInDB(conversation)
@@ -755,9 +768,12 @@ const initialConversionList = async () => {
 
     let xhistory: IChatItem[] = [],
         xarchived: IChatItem[] = []
-    return _.map(conversationList, c => {
+
+    let conversationListForState: IConversation[] = []
+    let hasSelected = false
+    conversationListForState = _.map(conversationList, c => {
         ;(xhistory = []), (xarchived = [])
-        const { archivedTS, conversationId } = c
+        const { archivedTS, conversationId, isSelected } = c
         _.map(chats, chatItem => {
             if (chatItem?.conversationId == conversationId) {
                 console.log(`conversationId-->`, conversationId)
@@ -777,6 +793,7 @@ const initialConversionList = async () => {
             }
         })
 
+        if (isSelected) hasSelected = true
         return {
             ...c,
             isFetching: false,
@@ -784,6 +801,9 @@ const initialConversionList = async () => {
             archived: xarchived,
         }
     })
+
+    if (!hasSelected) conversationListForState[0].isSelected = true
+    return conversationListForState
 }
 
 const initialImageResoureFromDB = async () => {

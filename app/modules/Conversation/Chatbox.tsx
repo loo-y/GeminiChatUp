@@ -49,7 +49,11 @@ const ChatBox = () => {
         return (
             <div className="__chatbox__ flex flex-col text-stone-900 bg-[#fafafa]">
                 <div className="flex-none title h-16 flex border-b border-[#eee] border-solid rounded-tr-lg bg-white">
-                    <div className=" flex flex-row items-center ml-4 w-full"></div>
+                    <div className=" flex flex-row items-center ml-4 w-full">
+                        <div className="block md:hidden mr-4">
+                            <DrawerChatList />
+                        </div>
+                    </div>
                 </div>
 
                 <CreateBy />

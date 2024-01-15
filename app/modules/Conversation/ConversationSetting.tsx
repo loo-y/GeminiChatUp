@@ -210,6 +210,7 @@ const ConversationSetting = ({ conversation }: IConversationSettingProps) => {
                                 defaultValue={maxOutputTokens || 2048}
                                 step={1}
                                 min={1}
+                                max={2048}
                                 onChange={handleChangeMaxOutputTokens}
                             />
                         </div>

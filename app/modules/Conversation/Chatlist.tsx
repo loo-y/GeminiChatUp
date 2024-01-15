@@ -53,7 +53,8 @@ const ConversationList = () => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     const { conversationList } = state || {}
-    const isSlectedConversationClass = `bg-stone-100`
+    const isSlectedConversationClass = `bg-gray-300`
+    const unSlectedConversationClass = `bg-gray-100`
     const handleSelectConversation = (theConversation: IConversation) => {
         dispatch(
             updateSelectConversation({
@@ -78,23 +79,25 @@ const ConversationList = () => {
         // )
     }
     return (
-        <div className="__conversationlist__ flex flex-col mt-3 gap-3 relative flex-1 overflow-scroll">
-            <div className="">
-                {_.map(conversationList, (theConversation, conversationIndex) => {
-                    const { conversationName, history, isSelected, modelAvatar, isFetching } = theConversation || {}
-                    const lastChatItem: IChatItem | undefined = history && history[history.length - 1]
-                    const lastText = lastChatItem?.parts?.[0]?.text
-                    const isUser = lastChatItem?.role == Roles.user
-                    const lastTimestamp = lastChatItem?.timestamp || ``
-                    return (
+        <div className="__conversationlist__ flex flex-col mt-3 gap-1 relative flex-1 overflow-scroll bg-white">
+            {_.map(conversationList, (theConversation, conversationIndex) => {
+                const { conversationName, history, isSelected, modelAvatar, isFetching } = theConversation || {}
+                const lastChatItem: IChatItem | undefined = history && history[history.length - 1]
+                const lastText = lastChatItem?.parts?.[0]?.text
+                const isUser = lastChatItem?.role == Roles.user
+                const lastTimestamp = lastChatItem?.timestamp || ``
+                return (
+                    <div
+                        key={`__conversationlist__${conversationIndex}`}
+                        className={`flex py-1 px-2 cursor-pointer `}
+                        onClick={() => {
+                            handleSelectConversation(theConversation)
+                        }}
+                    >
                         <div
-                            key={`____conversationlist__${conversationIndex}`}
-                            className={`flex flex-row gap-3 py-4 px-4 cursor-pointer ${
-                                isSelected ? isSlectedConversationClass : ''
+                            className={`flex flex-row gap-3 shadow rounded-2xl  mx-1 py-5 px-2 flex-grow ${
+                                isSelected ? isSlectedConversationClass : unSlectedConversationClass
                             }`}
-                            onClick={() => {
-                                handleSelectConversation(theConversation)
-                            }}
                         >
                             <div className="__conersation_avatar__ flex items-center justify-start">
                                 {modelAvatar ? (
@@ -118,9 +121,9 @@ const ConversationList = () => {
                                 {lastTimestamp ? <span>{formatDate(lastTimestamp)}</span> : null}
                             </div>
                         </div>
-                    )
-                })}
-            </div>
+                    </div>
+                )
+            })}
         </div>
     )
 }

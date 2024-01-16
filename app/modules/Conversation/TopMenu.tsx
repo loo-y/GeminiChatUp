@@ -29,7 +29,9 @@ const TopMenu = ({ clickCallback }: { clickCallback?: () => void }) => {
         <div className="flex">
             <DropdownMenu>
                 <DropdownMenuTrigger>
-                    <div className="font-bold">Create new</div>
+                    <div className="font-bold px-2 py-2 border rounded-xl bg-gray-50 hover:bg-gray-100 focus:bg-gray-100">
+                        Create
+                    </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="ml-4">
                     <DropdownMenuItem onClick={handleAddProConsation}>Pro Conversation</DropdownMenuItem>

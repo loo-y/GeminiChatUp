@@ -13,6 +13,7 @@ import { IConversation } from '../../(pages)/chat/interface'
 import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import UploadImageButton from './UploadImageButton'
 import { Dialog, DialogContent } from '@/app/components/ui/dialog'
+import ChatImagePreview from './ChatImagePreview'
 
 const ChatInputWithAttachment = ({
     conversation,
@@ -252,10 +253,15 @@ const ThumbnailDisplay: React.FC<{ imageUrl: string; onDelete: () => void }> = (
         }
     }
 
+    const handleImageClick = (event: MouseEvent<HTMLImageElement>) => {
+        event.preventDefault()
+        event.stopPropagation()
+    }
+
     return (
         <>
             <div
-                className="w-12 h-full relative  rounded-lg bg-contain bg-no-repeat bg-center border border-gray-200 bg-gray-200"
+                className="w-12 h-full relative  rounded-lg bg-contain bg-no-repeat bg-center border border-gray-200 bg-gray-200 cursor-zoom-in"
                 style={{ backgroundImage: `url(${imageUrl})` }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -285,20 +291,21 @@ const ThumbnailDisplay: React.FC<{ imageUrl: string; onDelete: () => void }> = (
                 )}
             </div>
             <div className="">
-                <Dialog open={openPreview}>
+                <ChatImagePreview imageUrl={imageUrl} isOpen={openPreview} closeCallback={handleClosePreview} />
+                {/* <Dialog open={openPreview}>
                     <DialogContent
-                        className="min-w-[80vw] min-h-[80vh] max-h-[90vh] w-full bg-gray-200 border-gray-200 active:outline-none focus:outline-none"
-                        onOpenAutoFocus={handleUnactiveClose}
+                        className="py-0 px-0 border-none bg-transparent active:outline-none focus:outline-none text-center justify-center flex items-center"
+                        // onOpenAutoFocus={handleUnactiveClose}
                         onInteractOutside={handleClosePreview}
                         autoFocus={false}
                         onEscapeKeyDown={handleClosePreview}
+                        onClick={handleClosePreview}
                     >
-                        <div
-                            className="grid gap-4 py-4 bg-contain bg-no-repeat bg-center w-full h-full"
-                            style={{ backgroundImage: `url(${imageUrl})` }}
-                        ></div>
+                        <div className=' max-h-[90vh] max-w-[90vw] min-w-[80vw] min-h-[80vh] object-contain justify-center items-center flex'>
+                        <img src={imageUrl} className='' onClick={handleImageClick} />
+                        </div>
                     </DialogContent>
-                </Dialog>
+                </Dialog> */}
             </div>
         </>
     )

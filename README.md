@@ -4,6 +4,8 @@
 ## 关于
 本项目为基于 Google GeminiPro API Key 的聊天应用，支持响应式布局。可保留多组对话，每个对话的基础参数可单独设置。
 
+[Demo](https://chatup.moca.one)
+
 <br /><img width="800" alt="SCR-20240112-bylz" src="https://github.com/loo-y/GeminiChatUp/assets/2792566/a69a57a5-598e-4958-a912-a7cc37dba2aa" /><br />
 <br /><img width="800" alt="SCR-20240104-mgju" src="https://github.com/loo-y/GeminiChatUp/assets/2792566/cdfd758f-eb8e-4165-9047-85124188dfce" /><br />
 <br /><img width="800" alt="SCR-20240104-mgmn" src="https://github.com/loo-y/GeminiChatUp/assets/2792566/cf8c68ed-dded-483e-b69e-f19e022726b6" /><br />

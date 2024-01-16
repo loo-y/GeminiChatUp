@@ -55,7 +55,7 @@ const ConversationList = ({ clickCallback }: { clickCallback?: () => void }) => 
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
     const { conversationList } = state || {}
-    const isSlectedConversationClass = `bg-gray-600  text-gray-100 `
+    const isSlectedConversationClass = `bg-gray-500  text-gray-100 `
     const unSlectedConversationClass = `bg-gray-100`
     const isSlectedConversationInnerTextClass = `text-gray-50`
     const unSlectedConversationInnerTextClass = `text-gray-400`

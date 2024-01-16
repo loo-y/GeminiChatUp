@@ -31,6 +31,7 @@ import { Dialog, DialogContent } from '@/app/components/ui/dialog'
 import { GeminiModel } from '@/app/shared/interfaces'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/app/components/ui/drawer'
 import ChatList from './Chatlist'
+import ChatImagePreview from './ChatImagePreview'
 
 const ChatBox = () => {
     const dispatch = useAppDispatch()
@@ -227,7 +228,8 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
                 </div>
             </div>
             <div className="">
-                <Dialog open={openPreview}>
+                <ChatImagePreview imageUrl={previewImage} isOpen={openPreview} closeCallback={handleClosePreview} />
+                {/* <Dialog open={openPreview}>
                     <DialogContent
                         className="min-w-[80vw] min-h-[80vh] max-h-[90vh] w-full bg-gray-200 border-gray-200 active:outline-none focus:outline-none"
                         onInteractOutside={handleClosePreview}
@@ -239,7 +241,7 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
                             style={{ backgroundImage: `url(${previewImage})` }}
                         ></div>
                     </DialogContent>
-                </Dialog>
+                </Dialog> */}
             </div>
         </>
     )

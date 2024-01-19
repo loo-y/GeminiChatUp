@@ -5,6 +5,7 @@ import _ from 'lodash'
 import {
     getChatState,
     getGeminiChatAnswer,
+    getGeminiStreamChatAnswer,
     getGeminiContentAnswer,
     updateConversationInfo,
     removeConversationAndChats,
@@ -125,11 +126,20 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
     const { history, archived, modelType, conversationId, isFetching } = conversation
     const state = useAppSelector(getChatState)
     const { imageResourceList } = state || {}
+    const searchParams = useSearchParams()
+    const queryIsStream = searchParams.get('stream') || ``
 
     const contentRef = useRef(null)
     const [openPreview, setOpenPreview] = useState(false)
     const [previewImage, setPreviewImage] = useState('')
     const imagePreviewRef = useRef(null)
+    const isLastModel = useMemo(() => {
+        const hl = history?.length || 0
+        if (hl > 0 && history && history[hl - 1] && history[hl - 1].role == Roles.model) {
+            return true
+        }
+        return false
+    }, [history])
     useEffect(() => {
         if (contentRef.current) {
             const theElement = contentRef.current as HTMLElement
@@ -159,13 +169,23 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
 
     const handleRetry = () => {
         if (modelType == GeminiModel.geminiPro) {
-            dispatch(
-                getGeminiChatAnswer({
-                    conversationId,
-                    conversation,
-                    history,
-                })
-            )
+            if (Number(queryIsStream) == 1) {
+                dispatch(
+                    getGeminiStreamChatAnswer({
+                        conversationId,
+                        conversation,
+                        history,
+                    })
+                )
+            } else {
+                dispatch(
+                    getGeminiChatAnswer({
+                        conversationId,
+                        conversation,
+                        history,
+                    })
+                )
+            }
         } else {
             dispatch(
                 getGeminiContentAnswer({
@@ -214,11 +234,12 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
                                     imageResourceList={imageResourceList}
                                     handleClickThumbnail={handleClickThumbnail}
                                     handleRetry={handleRetry}
+                                    isFetching={isFetching && index + 1 == history?.length}
                                 />
                             </React.Fragment>
                         )
                     })}
-                    {isFetching ? (
+                    {!isLastModel && isFetching ? (
                         <div className="flex flex-row items-center flex-grow justify-start gap-1">
                             <div className=" svg-image flex min-w-12 h-12 w-12 overflow-hidden items-center justify-center ">
                                 <img src={'/images/three-dots-loading.svg'} className="h-10 w-10 " />
@@ -252,11 +273,13 @@ const ChatContentItem = ({
     imageResourceList,
     handleClickThumbnail,
     handleRetry,
+    isFetching,
 }: {
     contentItem: IChatItem
     imageResourceList: IImageItem[]
     handleClickThumbnail: (imageBase64: string) => void
     handleRetry?: () => void
+    isFetching?: boolean
 }) => {
     const { role, parts, timestamp, imageList, isFailed, failedInfo } = contentItem || {}
     const isUser = role == Roles.user
@@ -352,8 +375,15 @@ const ChatContentItem = ({
                         {formatDate(timestamp)}
                     </div>
                 </div>
+                {isFetching && role == Roles.model ? (
+                    <div className="flex flex-row items-center flex-grow justify-start gap-1">
+                        <div className=" svg-image flex min-w-12 h-12 w-12 overflow-hidden items-center justify-center ">
+                            <img src={'/images/three-dots-loading.svg'} className="h-10 w-10 " />
+                        </div>
+                    </div>
+                ) : null}
             </div>
-            {role == Roles.user && isFailed && failedInfo ? (
+            {isFailed && failedInfo ? (
                 <div className={`flex flex-row items-center justify-center flex-grow my-2`}>
                     <div className="flex flex-row gap-2 items-center border border-solid border-yellow-600 rounded-xl py-2 pl-5 pr-8 text-gray-500 italic font-bold">
                         <div className=" svg-image flex min-w-8 h-8 w-8 overflow-hidden items-center justify-center ">

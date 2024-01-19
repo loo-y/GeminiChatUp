@@ -12,6 +12,7 @@ import { geminiChatDb, DBConversation } from '@/app/shared/db'
 import { HarmBlockThreshold, HarmCategory, Part } from '@google/generative-ai'
 import { generateReversibleToken, getPureDataFromImageBase64 } from '@/app/shared/utils'
 import { defaultConversaionName, inputTokenLimit } from '@/app/shared/constants'
+import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 // define a queue to store api request
 type APIFunc = (typeof API)[keyof typeof API]
@@ -344,6 +345,216 @@ export const getGeminiChatAnswer = createAsyncThunk(
     }
 )
 
+export const getGeminiStreamChatAnswer = createAsyncThunk(
+    'chatSlice/getGeminiStreamChatAnswer',
+    async (
+        {
+            history,
+            inputText,
+            conversationId,
+            conversation,
+        }: { history?: IChatItem[]; inputText?: string; conversationId: string; conversation: IConversation },
+        { dispatch, getState }: any
+    ) => {
+        let historyLimitTS = conversation.historyLimitTS || -1
+
+        let newChatItem: IChatItem | undefined = undefined
+
+        if (inputText) {
+            newChatItem = {
+                conversationId,
+                role: Roles.user,
+                parts: [{ text: inputText }],
+                timestamp: Date.now(),
+            }
+
+            dispatch(
+                updateChatToConversation({
+                    conversationId,
+                    chatItem: newChatItem,
+                    isFetching: true,
+                })
+            )
+        } else {
+            // 将原本history中的最后一条赋值给 inputText
+            const lastItem = history && history.splice(-1)
+            history = _.reduce(
+                history,
+                (result: IChatItem[], item: IChatItem) => {
+                    if (result.length === 0 || item.role !== _.last(result)?.role) {
+                        result.push(item)
+                    }
+                    return result
+                },
+                []
+            )
+            inputText = lastItem?.[0]?.parts?.[0]?.text || ''
+            dispatch(
+                updateChatToConversation({
+                    conversationId,
+                    isFetching: true,
+                })
+            )
+        }
+
+        let historyToFetch: IChatItem[] = []
+        if (history && !_.isEmpty(history)) {
+            const limit = inputTokenLimit.GeminiPro
+            historyToFetch = history
+            if (historyLimitTS > -1) {
+                const _index_ =
+                    _.findIndex(history, h => {
+                        return h.timestamp == historyLimitTS
+                    }) || 0
+                historyToFetch = history.slice(_index_)
+            }
+            let { totalTokens, validIndex } = await fetchTokenCount({
+                history: _.map(historyToFetch, h => {
+                    return {
+                        role: h.role,
+                        parts: h.parts,
+                    }
+                }).concat(
+                    newChatItem
+                        ? [
+                              {
+                                  role: newChatItem.role,
+                                  parts: newChatItem.parts,
+                              },
+                          ]
+                        : []
+                ),
+                limit,
+            })
+
+            if (totalTokens && validIndex != undefined && totalTokens > limit) {
+                let theChatItemLimit = historyToFetch[validIndex]
+                if (theChatItemLimit?.timestamp) {
+                    if (theChatItemLimit.role == Roles.model) {
+                        validIndex = validIndex + 1
+                        theChatItemLimit = historyToFetch[validIndex]
+                    }
+                    if (theChatItemLimit?.timestamp) {
+                        historyLimitTS = theChatItemLimit.timestamp
+                        historyToFetch = historyToFetch.slice(validIndex)
+                    } else {
+                        historyLimitTS = newChatItem?.timestamp || -1
+                        historyToFetch = []
+                    }
+                    dispatch(updateConversationInfo({ ...conversation, historyLimitTS }))
+                } else {
+                    // newChatItem
+                    console.log(`the input text is too long!`)
+                    alert(`the input text is too long!`)
+
+                    dispatch(
+                        updateChatToConversation({
+                            conversationId,
+                            isFetching: false,
+                        })
+                    )
+                    return
+                }
+            }
+        }
+
+        const { safetySettings, generationConfig } = getFetchSettingsFromConverstaion(conversation)
+        const jsonBody = _.omitBy(
+            {
+                history: historyToFetch,
+                inputText,
+                conversationId,
+                generationConfig,
+                safetySettings,
+                isStream: true,
+            },
+            _.isUndefined
+        )
+        const ctrl = new AbortController()
+        let receivedText = ``
+        const timestampForNewChatItem = Date.now()
+        const eventSourcePost = fetchEventSource('/api/geminichat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ...jsonBody }),
+            onmessage: function (event) {
+                console.log(`event`, event)
+                console.log('Received message:', event.data)
+                if (event.event == `error`) {
+                    ctrl.abort(event)
+                    dispatch(
+                        updateChatToConversation({
+                            conversationId,
+                            fetchFailed: true,
+                            failedInfo: event.data || `error`,
+                            isFetching: false,
+                        })
+                    )
+                    throw new Error()
+                }
+                if (event.data.includes('__completed__')) {
+                    console.log(`this is completed`, receivedText)
+                    ctrl.abort()
+                    // 需要获取实时 ChatState
+                    const chatState: ChatState = getChatState(getState())
+                    // 这里只需要更新到DB
+                    updateChatToConversationToDB({
+                        conversationId,
+                        chatItem: {
+                            conversationId,
+                            role: Roles.model,
+                            parts: [{ text: receivedText }],
+                            timestamp: timestampForNewChatItem,
+                        },
+                        conversationList: chatState.conversationList,
+                        isFetching: false,
+                    })
+
+                    // 更新fetch状态
+                    dispatch(
+                        updateChatToConversation({
+                            conversationId,
+                            isFetching: false,
+                        })
+                    )
+                } else {
+                    receivedText += event.data.replace(/\\n/g, '\n')
+                    dispatch(
+                        updateLastChatStreamToConversation({
+                            conversationId,
+                            chatItem: {
+                                conversationId,
+                                role: Roles.model,
+                                parts: [{ text: receivedText }],
+                                timestamp: timestampForNewChatItem,
+                            },
+                            isFetching: true,
+                        })
+                    )
+                }
+            },
+            onerror: function (event) {
+                const failedInfo = typeof event == `string` ? String(event) : event?.data ? event.data : `error`
+                console.log(`onerror ！！！ received event`, event)
+                console.log('Received message--->', event?.data)
+                ctrl.abort()
+                dispatch(
+                    updateChatToConversation({
+                        conversationId,
+                        fetchFailed: true,
+                        failedInfo: failedInfo,
+                        isFetching: false,
+                    })
+                )
+                return
+            },
+            signal: ctrl.signal,
+        })
+    }
+)
+
 export const initiaStateFromDB = createAsyncThunk(
     'chatSlice/initiaStateFromDB',
     async (params, { dispatch, getState }: any) => {
@@ -502,16 +713,58 @@ export const chatSlice = createSlice({
         },
         updateChatToConversation: (
             state,
-            action: PayloadAction<{ conversationId: string; chatItem?: IChatItem; isFetching: boolean }>
+            action: PayloadAction<{
+                conversationId: string
+                chatItem?: IChatItem
+                isFetching: boolean
+                fetchFailed?: boolean
+                failedInfo?: string
+            }>
         ) => {
-            const { conversationId, chatItem, isFetching } = action.payload || {}
+            const { conversationId, chatItem, isFetching, fetchFailed, failedInfo } = action.payload || {}
             let conversationList = _.clone(state.conversationList)
             state.conversationList = updateChatToConversationToDB({
                 conversationId,
                 conversationList,
                 chatItem,
+                fetchFailed,
+                failedInfo,
                 isFetching,
             })
+        },
+        updateLastChatStreamToConversation: (
+            state,
+            action: PayloadAction<{ conversationId: string; chatItem: IChatItem; isFetching: boolean }>
+        ) => {
+            const { conversationId, chatItem, isFetching } = action.payload || {}
+            const { timestamp } = chatItem || {}
+            let conversationList = _.map(state.conversationList, c => {
+                return { ...c }
+            })
+            const theConversationIndex = _.findIndex(conversationList, c => {
+                return conversationId == c.conversationId
+            })
+            const theConversation = conversationList[theConversationIndex]
+            console.log(`theConversation`, theConversation)
+            if (!theConversation) {
+                return state
+            }
+            let history = theConversation.history || []
+
+            const theChatItemIndex = _.findIndex(history, (_chatItem_: IChatItem) => {
+                return _chatItem_.timestamp == timestamp
+            })
+            if (theChatItemIndex < 0) {
+                history.push(chatItem)
+            } else {
+                history[theChatItemIndex] = {
+                    ...history[theChatItemIndex],
+                    ...chatItem,
+                }
+            }
+            theConversation.history = history
+            conversationList[theConversationIndex] = { ...theConversation }
+            state.conversationList = conversationList
         },
         addImageToInput: (state, action: PayloadAction<{ base64Content: string; mimeType: string }>) => {
             const { base64Content, mimeType } = action.payload || {}
@@ -622,6 +875,7 @@ export const chatSlice = createSlice({
 export const {
     updateState,
     updateChatToConversation,
+    updateLastChatStreamToConversation,
     addImageToInput,
     deleteImageFromInput,
     clearInputImageList,
@@ -647,7 +901,9 @@ const updateChatToConversationToDB = ({
     failedInfo?: string
     conversationList: ChatState['conversationList']
 }) => {
-    const newConversationList = _.clone(conversationList)
+    let newConversationList = _.map(conversationList, c => {
+        return { ...c }
+    })
     if (chatItem) {
         let hasTheConversation = false
         _.each(newConversationList, conversation => {

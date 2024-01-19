@@ -4,6 +4,7 @@ import _ from 'lodash'
 import {
     getChatState,
     getGeminiChatAnswer,
+    getGeminiStreamChatAnswer,
     getGeminiContentAnswer,
     deleteImageFromInput,
     archiveConversationHistory,
@@ -14,6 +15,7 @@ import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import UploadImageButton from './UploadImageButton'
 import { Dialog, DialogContent } from '@/app/components/ui/dialog'
 import ChatImagePreview from './ChatImagePreview'
+import { useSearchParams } from 'next/navigation'
 
 const ChatInputWithAttachment = ({
     conversation,
@@ -29,6 +31,8 @@ const ChatInputWithAttachment = ({
     const [inputValue, setInputValue] = useState<string>('')
     const [inputRows, setInputRows] = useState<number>(1)
     const inputRef = useRef<HTMLTextAreaElement>(null)
+    const searchParams = useSearchParams()
+    const queryIsStream = searchParams.get('stream') || ``
 
     const handleCompositionStart = () => {
         setIsComposing(true)
@@ -98,14 +102,25 @@ const ChatInputWithAttachment = ({
                     })
                 )
             } else {
-                dispatch(
-                    getGeminiChatAnswer({
-                        conversationId,
-                        conversation,
-                        history: _history,
-                        inputText: inputValue,
-                    })
-                )
+                if (Number(queryIsStream) == 1) {
+                    dispatch(
+                        getGeminiStreamChatAnswer({
+                            conversationId,
+                            conversation,
+                            history: _history,
+                            inputText: inputValue,
+                        })
+                    )
+                } else {
+                    dispatch(
+                        getGeminiChatAnswer({
+                            conversationId,
+                            conversation,
+                            history: _history,
+                            inputText: inputValue,
+                        })
+                    )
+                }
             }
 
             setInputValue('')

@@ -45,7 +45,7 @@ const defaultSafetySettings: ISafetySetting[] = [
     },
 ]
 
-interface IGeminiChatProps {
+export interface IGeminiChatProps {
     generationConfig?: IGenerationConfig
     safetySettings?: ISafetySetting[]
     history?: IChatItem[]
@@ -136,7 +136,90 @@ export const GeminiChat = async ({
     }
 }
 
-interface IGeminiContentProps {
+export interface IGeminiStreamChatProps extends IGeminiChatProps {
+    streamHanler: ({ token, error, status }: { token: string; error?: string; status: boolean }) => void
+    completeHandler?: ({ content, status }: { content: string; status: boolean }) => void
+}
+export const GeminiStreamChat = async ({
+    generationConfig,
+    safetySettings,
+    history,
+    inputText,
+    streamHanler,
+    completeHandler,
+}: IGeminiStreamChatProps) => {
+    let error = `input text is required.`
+    if (!inputText) {
+        streamHanler({
+            token: ``,
+            error,
+            status: false,
+        })
+
+        completeHandler && completeHandler({ content: ``, status: false })
+        return
+    }
+
+    let params: Partial<IGeminiChatProps> = {
+        generationConfig: {
+            ...defaultGenerationConfig,
+            ...generationConfig,
+        },
+        safetySettings: _.isEmpty(safetySettings)
+            ? defaultSafetySettings
+            : _.map(defaultSafetySettings, ss => {
+                  const category = ss.category
+                  const newSS = _.find(safetySettings, category)
+                  return {
+                      ...ss,
+                      threshold: newSS?.threshold || ss.threshold,
+                  }
+              }),
+        history: _.map(history, h => {
+            return {
+                role: h.role,
+                parts: h.parts,
+            }
+        }),
+    }
+    if (_.isEmpty(history)) {
+        delete params.history
+    }
+
+    try {
+        const chat = model.startChat(params)
+
+        const streamResult = await chat.sendMessageStream(inputText)
+        let text = ''
+        for await (const chunk of streamResult.stream) {
+            const chunkText = chunk.text()
+            // console.log(chunkText)
+            streamHanler({
+                token: chunkText,
+                status: true,
+            })
+            text += chunkText
+        }
+
+        completeHandler && completeHandler({ content: text, status: true })
+
+        return
+    } catch (e) {
+        console.log(`GeminiChat error`, e)
+        error = String(e)
+    }
+
+    streamHanler({
+        token: ``,
+        error,
+        status: false,
+    })
+
+    completeHandler && completeHandler({ content: ``, status: false })
+    return
+}
+
+export interface IGeminiContentProps {
     generationConfig?: IGenerationConfig
     safetySettings?: ISafetySetting[]
     prompt?: string
@@ -210,6 +293,94 @@ export const GeminiContent = async ({
         text: ``,
         error,
     }
+}
+
+export interface IGeminiStreamContentProps extends IGeminiContentProps {
+    streamHanler: ({ token, error, status }: { token: string; error?: string; status: boolean }) => void
+    completeHandler?: ({ content, status }: { content: string; status: boolean }) => void
+}
+export const GeminiStreamContent = async ({
+    generationConfig,
+    safetySettings,
+    parts,
+    prompt,
+    streamHanler,
+    completeHandler,
+}: IGeminiStreamContentProps) => {
+    let error = `promopt text is required.`
+    if (_.isEmpty(parts) && !prompt) {
+        streamHanler({
+            token: ``,
+            error,
+            status: false,
+        })
+
+        completeHandler && completeHandler({ content: ``, status: false })
+        return
+    }
+
+    let inputParts: Part[]
+    if (!parts || _.isEmpty(parts)) {
+        inputParts = [
+            {
+                text: prompt || ``,
+            },
+        ]
+    } else {
+        inputParts = parts
+    }
+    const hasImage = _.some(inputParts, part => {
+        return part?.inlineData?.data && part?.inlineData?.mimeType
+    })
+
+    let params: Partial<IGeminiContentProps> & { contents: [{ role: Roles; parts: Part[] }] } = {
+        generationConfig: {
+            ...defaultGenerationConfig,
+            ...generationConfig,
+        },
+        safetySettings: _.isEmpty(safetySettings)
+            ? defaultSafetySettings
+            : _.map(defaultSafetySettings, ss => {
+                  const category = ss.category
+                  const newSS = _.find(safetySettings, category)
+                  return {
+                      ...ss,
+                      threshold: newSS?.threshold || ss.threshold,
+                  }
+              }),
+        contents: [{ role: Roles.user, parts: inputParts }],
+    }
+
+    try {
+        const streamResult = hasImage
+            ? await modelProVision.generateContentStream(params)
+            : await model.generateContentStream(params)
+        let text = ''
+        for await (const chunk of streamResult.stream) {
+            const chunkText = chunk.text()
+            // console.log(chunkText)
+            streamHanler({
+                token: chunkText,
+                status: true,
+            })
+            text += chunkText
+        }
+
+        completeHandler && completeHandler({ content: text, status: true })
+        return
+    } catch (e) {
+        console.log(`GeminiChat error`, e)
+        error = String(e)
+    }
+
+    streamHanler({
+        token: ``,
+        error,
+        status: false,
+    })
+
+    completeHandler && completeHandler({ content: ``, status: false })
+    return
 }
 
 export const GeminiTokenCount = async ({ prompt, parts, history, limit }: IGeminiTokenCountProps) => {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GeminiContent } from '../../gemini'
+import { GeminiContent, IGeminiContentProps, GeminiStreamContent, IGeminiStreamContentProps } from '../../gemini'
 import { ISafetySetting, IGenerationConfig, IChatItem } from '../../gemini/interface'
 import { Part } from '@google/generative-ai'
 export async function GET(request: NextRequest) {
@@ -14,8 +14,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     const body = await request.json()
-    const { parts, generationConfig, safetySettings } = body || {}
+    const { parts, generationConfig, safetySettings, isStream } = body || {}
 
+    // 流式
+    if (isStream) {
+        return getGeminiSSEResponse({
+            parts,
+            generationConfig,
+            safetySettings,
+        })
+    }
     const modelResponse = await getGeminiResponse({
         parts,
         generationConfig,
@@ -26,17 +34,7 @@ export async function POST(request: NextRequest) {
     return response
 }
 
-const getGeminiResponse = async ({
-    prompt,
-    generationConfig,
-    safetySettings,
-    parts,
-}: {
-    prompt?: string
-    generationConfig?: IGenerationConfig
-    safetySettings?: ISafetySetting[]
-    parts?: Part[]
-}) => {
+const getGeminiResponse = async ({ prompt, generationConfig, safetySettings, parts }: IGeminiContentProps) => {
     const modelResponse = await GeminiContent({
         prompt,
         parts,
@@ -45,4 +43,60 @@ const getGeminiResponse = async ({
     })
 
     return modelResponse
+}
+
+const getGeminiSSEResponse = ({
+    prompt,
+    generationConfig,
+    safetySettings,
+    parts,
+}: Partial<IGeminiStreamContentProps>) => {
+    // 将 SSE 数据编码为 Uint8Array
+    const encoder = new TextEncoder()
+
+    // 创建 TransformStream
+    const transformStream = new TransformStream({
+        transform(chunk, controller) {
+            controller.enqueue(chunk)
+        },
+    })
+
+    // 创建 SSE 响应
+    let response = new NextResponse(transformStream.readable)
+
+    // 设置响应头，指定使用 SSE
+    response.headers.set('Content-Type', 'text/event-stream; charset=utf-8')
+    response.headers.set('Cache-Control', 'no-cache')
+    response.headers.set('Connection', 'keep-alive')
+    response.headers.set('Transfer-Encoding', 'chunked')
+
+    const writer = transformStream.writable.getWriter()
+    const eventMsgHeader = encoder.encode(`event: message\n`)
+    const eventErrorHeader = encoder.encode(`event: error\n`)
+    GeminiStreamContent({
+        prompt,
+        parts,
+        generationConfig,
+        safetySettings,
+        streamHanler: ({ token, error, status }) => {
+            if (status) {
+                writer.write(eventMsgHeader)
+                const message = `data: ${token.replace(/\n/, '\\n')}\n\n`
+                const messageUint8Array = encoder.encode(message)
+                writer.write(messageUint8Array)
+            } else {
+                writer.write(eventErrorHeader)
+                const message = `data: ${error || ''}\n\n`
+                const messageUint8Array = encoder.encode(message)
+                writer.write(messageUint8Array)
+            }
+        },
+        completeHandler: ({ content, status }) => {
+            writer.write(eventMsgHeader)
+            const messageUint8Array = encoder.encode('data: __completed__\n\n')
+            writer.write(messageUint8Array)
+        },
+    })
+
+    return response
 }

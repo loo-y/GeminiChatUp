@@ -28,6 +28,7 @@ const ChatImagePreview = ({
     const handleImageClick = (event: MouseEvent<HTMLImageElement>) => {
         event.preventDefault()
         event.stopPropagation()
+        handleClosePreview()
     }
 
     if (!imageUrl) return null

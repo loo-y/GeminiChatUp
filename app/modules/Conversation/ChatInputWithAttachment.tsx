@@ -215,17 +215,17 @@ const ChatInputWithAttachment = ({
 export default ChatInputWithAttachment
 
 const ThumbnailDisplay: React.FC<{ imageUrl: string; onDelete: () => void }> = ({ imageUrl, onDelete }) => {
-    const [hovered, setHovered] = useState(false)
+    const [hovered, setHovered] = useState(true)
     const [openPreview, setOpenPreview] = useState(false)
     const thumbnailRef = useRef(null)
     const imagePreviewRef = useRef(null)
 
     const handleMouseEnter = () => {
-        setHovered(true)
+        // setHovered(true)
     }
 
     const handleMouseLeave = () => {
-        setHovered(false)
+        // setHovered(false)
     }
 
     const handleDelete = (event: MouseEvent<HTMLButtonElement>) => {

@@ -92,11 +92,13 @@ export const getGeminiContentAnswer = createAsyncThunk(
             inputText,
             conversationId,
             conversation,
+            isStream,
         }: {
             history?: IChatItem[]
             inputText?: string
             conversationId: string
             conversation: IConversation
+            isStream?: boolean
         } & Partial<Pick<ChatState, 'inputImageList'>>,
         { dispatch, getState }: any
     ) => {
@@ -201,17 +203,121 @@ export const getGeminiContentAnswer = createAsyncThunk(
 
         const { safetySettings, generationConfig } = getFetchSettingsFromConverstaion(conversation)
 
-        dispatch(
-            makeApiRequestInQueue({
-                apiRequest: fetchGeminiContent.bind(null, {
+        if (!isStream) {
+            dispatch(
+                makeApiRequestInQueue({
+                    apiRequest: fetchGeminiContent.bind(null, {
+                        parts,
+                        conversationId,
+                        generationConfig,
+                        safetySettings,
+                    }),
+                    asyncThunk: getGeminiContentAnswer,
+                })
+            )
+        } else {
+            const jsonBody = _.omitBy(
+                {
                     parts,
                     conversationId,
                     generationConfig,
                     safetySettings,
-                }),
-                asyncThunk: getGeminiContentAnswer,
+                    isStream: true,
+                },
+                _.isUndefined
+            )
+            const ctrl = new AbortController()
+            let receivedText = ``
+            const timestampForNewChatItem = Date.now()
+            const eventSourcePost = fetchEventSource('/api/geminicontent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...jsonBody }),
+                onmessage: function (event) {
+                    console.log(`event`, event)
+                    console.log('Received message:', event.data)
+                    if (event.event == `error`) {
+                        dispatch(
+                            updateChatToConversation({
+                                conversationId,
+                                fetchFailed: true,
+                                failedInfo: event.data || `error`,
+                                isFetching: false,
+                            })
+                        )
+                        console.log(`abort from onmessage`)
+                        ctrl.abort(event)
+                        throw new Error()
+                    }
+                    if (event.data.includes('__completed__')) {
+                        console.log(`this is completed`, receivedText)
+                        ctrl.abort()
+                        // 需要获取实时 ChatState
+                        const chatState: ChatState = getChatState(getState())
+                        // 这里只需要更新到DB
+                        updateChatToConversationToDB({
+                            conversationId,
+                            chatItem: {
+                                conversationId,
+                                role: Roles.model,
+                                parts: [{ text: receivedText }],
+                                timestamp: timestampForNewChatItem,
+                            },
+                            conversationList: chatState.conversationList,
+                            isFetching: false,
+                        })
+
+                        // 更新fetch状态
+                        dispatch(
+                            updateChatToConversation({
+                                conversationId,
+                                isFetching: false,
+                            })
+                        )
+                    } else {
+                        receivedText += event.data.replace(/\\n/g, '\n')
+                        dispatch(
+                            updateLastChatStreamToConversation({
+                                conversationId,
+                                chatItem: {
+                                    conversationId,
+                                    role: Roles.model,
+                                    parts: [{ text: receivedText }],
+                                    timestamp: timestampForNewChatItem,
+                                },
+                                isFetching: true,
+                            })
+                        )
+                    }
+                },
+                onopen: async function (response) {
+                    if (ctrl.signal.aborted) {
+                        console.log(`this is aborted`)
+                        throw new Error()
+                    }
+                },
+                onerror: function (event) {
+                    const failedInfo = typeof event == `string` ? String(event) : event?.data ? event.data : `error`
+                    console.log(`onerror ！！！ received event`, event)
+                    console.log('Received message--->', event?.data)
+
+                    dispatch(
+                        updateChatToConversation({
+                            conversationId,
+                            fetchFailed: true,
+                            failedInfo: failedInfo,
+                            isFetching: false,
+                        })
+                    )
+                    console.log(`abort from onerror`)
+                    ctrl.abort()
+                    return
+                },
+                signal: ctrl.signal,
             })
-        )
+        }
     }
 )
 
@@ -441,7 +547,14 @@ export const getGeminiChatAnswer = createAsyncThunk(
             inputText,
             conversationId,
             conversation,
-        }: { history?: IChatItem[]; inputText?: string; conversationId: string; conversation: IConversation },
+            isStream,
+        }: {
+            history?: IChatItem[]
+            inputText?: string
+            conversationId: string
+            conversation: IConversation
+            isStream?: boolean
+        },
         { dispatch, getState }: any
     ) => {
         let historyLimitTS = conversation.historyLimitTS || -1
@@ -547,18 +660,123 @@ export const getGeminiChatAnswer = createAsyncThunk(
         }
 
         const { safetySettings, generationConfig } = getFetchSettingsFromConverstaion(conversation)
-        dispatch(
-            makeApiRequestInQueue({
-                apiRequest: fetchGeminiChat.bind(null, {
+
+        if (!isStream) {
+            dispatch(
+                makeApiRequestInQueue({
+                    apiRequest: fetchGeminiChat.bind(null, {
+                        history: historyToFetch,
+                        inputText,
+                        conversationId,
+                        generationConfig,
+                        safetySettings,
+                    }),
+                    asyncThunk: getGeminiChatAnswer,
+                })
+            )
+        } else {
+            const jsonBody = _.omitBy(
+                {
                     history: historyToFetch,
                     inputText,
                     conversationId,
                     generationConfig,
                     safetySettings,
-                }),
-                asyncThunk: getGeminiChatAnswer,
+                    isStream: true,
+                },
+                _.isUndefined
+            )
+            const ctrl = new AbortController()
+            let receivedText = ``
+            const timestampForNewChatItem = Date.now()
+            const eventSourcePost = fetchEventSource('/api/geminichat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...jsonBody }),
+                onmessage: function (event) {
+                    console.log(`event`, event)
+                    console.log('Received message:', event.data)
+                    if (event.event == `error`) {
+                        dispatch(
+                            updateChatToConversation({
+                                conversationId,
+                                fetchFailed: true,
+                                failedInfo: event.data || `error`,
+                                isFetching: false,
+                            })
+                        )
+                        console.log(`aborted from onmessage`)
+                        ctrl.abort(event)
+                        throw new Error()
+                    }
+                    if (event.data.includes('__completed__')) {
+                        console.log(`this is completed`, receivedText)
+                        ctrl.abort()
+                        // 需要获取实时 ChatState
+                        const chatState: ChatState = getChatState(getState())
+                        // 这里只需要更新到DB
+                        updateChatToConversationToDB({
+                            conversationId,
+                            chatItem: {
+                                conversationId,
+                                role: Roles.model,
+                                parts: [{ text: receivedText }],
+                                timestamp: timestampForNewChatItem,
+                            },
+                            conversationList: chatState.conversationList,
+                            isFetching: false,
+                        })
+
+                        // 更新fetch状态
+                        dispatch(
+                            updateChatToConversation({
+                                conversationId,
+                                isFetching: false,
+                            })
+                        )
+                    } else {
+                        receivedText += event.data.replace(/\\n/g, '\n')
+                        dispatch(
+                            updateLastChatStreamToConversation({
+                                conversationId,
+                                chatItem: {
+                                    conversationId,
+                                    role: Roles.model,
+                                    parts: [{ text: receivedText }],
+                                    timestamp: timestampForNewChatItem,
+                                },
+                                isFetching: true,
+                            })
+                        )
+                    }
+                },
+                onopen: async function (response) {
+                    if (ctrl.signal.aborted) {
+                        console.log(`this is aborted`)
+                        throw new Error()
+                    }
+                },
+                onerror: function (event) {
+                    const failedInfo = typeof event == `string` ? String(event) : event?.data ? event.data : `error`
+                    console.log(`onerror ！！！ received event`, event)
+                    console.log('Received message--->', event?.data)
+                    dispatch(
+                        updateChatToConversation({
+                            conversationId,
+                            fetchFailed: true,
+                            failedInfo: failedInfo,
+                            isFetching: false,
+                        })
+                    )
+                    console.log(`aborted from onerror`)
+                    ctrl.abort()
+                    return
+                },
+                signal: ctrl.signal,
             })
-        )
+        }
     }
 )
 

@@ -93,47 +93,26 @@ const ChatInputWithAttachment = ({
                 _history.pop() // 移除最后一条记录
             }
             if (attachable) {
-                if (Number(queryIsStream) == 1) {
-                    dispatch(
-                        getGeminiStreamContentAnswer({
-                            inputImageList,
-                            conversationId,
-                            conversation,
-                            history: _history,
-                            inputText: inputValue,
-                        })
-                    )
-                } else {
-                    dispatch(
-                        getGeminiContentAnswer({
-                            inputImageList,
-                            conversationId,
-                            conversation,
-                            history: _history,
-                            inputText: inputValue,
-                        })
-                    )
-                }
+                dispatch(
+                    getGeminiContentAnswer({
+                        inputImageList,
+                        conversationId,
+                        conversation,
+                        history: _history,
+                        inputText: inputValue,
+                        isStream: Number(queryIsStream) == 1,
+                    })
+                )
             } else {
-                if (Number(queryIsStream) == 1) {
-                    dispatch(
-                        getGeminiStreamChatAnswer({
-                            conversationId,
-                            conversation,
-                            history: _history,
-                            inputText: inputValue,
-                        })
-                    )
-                } else {
-                    dispatch(
-                        getGeminiChatAnswer({
-                            conversationId,
-                            conversation,
-                            history: _history,
-                            inputText: inputValue,
-                        })
-                    )
-                }
+                dispatch(
+                    getGeminiChatAnswer({
+                        conversationId,
+                        conversation,
+                        history: _history,
+                        inputText: inputValue,
+                        isStream: Number(queryIsStream) == 1,
+                    })
+                )
             }
 
             setInputValue('')

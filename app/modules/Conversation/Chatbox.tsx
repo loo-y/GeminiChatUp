@@ -170,41 +170,23 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
 
     const handleRetry = () => {
         if (modelType == GeminiModel.geminiProVision) {
-            if (Number(queryIsStream) == 1) {
-                dispatch(
-                    getGeminiStreamContentAnswer({
-                        history,
-                        conversationId,
-                        conversation,
-                    })
-                )
-            } else {
-                dispatch(
-                    getGeminiContentAnswer({
-                        history,
-                        conversationId,
-                        conversation,
-                    })
-                )
-            }
+            dispatch(
+                getGeminiContentAnswer({
+                    history,
+                    conversationId,
+                    conversation,
+                    isStream: Number(queryIsStream) == 1,
+                })
+            )
         } else {
-            if (Number(queryIsStream) == 1) {
-                dispatch(
-                    getGeminiStreamChatAnswer({
-                        conversationId,
-                        conversation,
-                        history,
-                    })
-                )
-            } else {
-                dispatch(
-                    getGeminiChatAnswer({
-                        conversationId,
-                        conversation,
-                        history,
-                    })
-                )
-            }
+            dispatch(
+                getGeminiChatAnswer({
+                    conversationId,
+                    conversation,
+                    history,
+                    isStream: Number(queryIsStream) == 1,
+                })
+            )
         }
     }
 

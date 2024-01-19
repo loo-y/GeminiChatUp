@@ -168,7 +168,15 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
     }
 
     const handleRetry = () => {
-        if (modelType == GeminiModel.geminiPro) {
+        if (modelType == GeminiModel.geminiProVision) {
+            dispatch(
+                getGeminiContentAnswer({
+                    history,
+                    conversationId,
+                    conversation,
+                })
+            )
+        } else {
             if (Number(queryIsStream) == 1) {
                 dispatch(
                     getGeminiStreamChatAnswer({
@@ -186,14 +194,6 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
                     })
                 )
             }
-        } else {
-            dispatch(
-                getGeminiContentAnswer({
-                    history,
-                    conversationId,
-                    conversation,
-                })
-            )
         }
     }
 
@@ -389,7 +389,7 @@ const ChatContentItem = ({
                         <div className=" svg-image flex min-w-8 h-8 w-8 overflow-hidden items-center justify-center ">
                             <img src={'/images/warning.svg'} className="h-6 w-6 " />
                         </div>
-                        <div className="line-clamp-2 ">{failedInfo}</div>
+                        <div className="line-clamp-2  break-words whitespace-break-spaces break-all">{failedInfo}</div>
                     </div>
                 </div>
             ) : null}

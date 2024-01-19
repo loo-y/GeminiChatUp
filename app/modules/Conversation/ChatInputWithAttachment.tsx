@@ -6,6 +6,7 @@ import {
     getGeminiChatAnswer,
     getGeminiStreamChatAnswer,
     getGeminiContentAnswer,
+    getGeminiStreamContentAnswer,
     deleteImageFromInput,
     archiveConversationHistory,
 } from '../../(pages)/chat/slice'
@@ -92,15 +93,27 @@ const ChatInputWithAttachment = ({
                 _history.pop() // 移除最后一条记录
             }
             if (attachable) {
-                dispatch(
-                    getGeminiContentAnswer({
-                        inputImageList,
-                        conversationId,
-                        conversation,
-                        history: _history,
-                        inputText: inputValue,
-                    })
-                )
+                if (Number(queryIsStream) == 1) {
+                    dispatch(
+                        getGeminiStreamContentAnswer({
+                            inputImageList,
+                            conversationId,
+                            conversation,
+                            history: _history,
+                            inputText: inputValue,
+                        })
+                    )
+                } else {
+                    dispatch(
+                        getGeminiContentAnswer({
+                            inputImageList,
+                            conversationId,
+                            conversation,
+                            history: _history,
+                            inputText: inputValue,
+                        })
+                    )
+                }
             } else {
                 if (Number(queryIsStream) == 1) {
                     dispatch(

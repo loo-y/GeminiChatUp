@@ -7,6 +7,7 @@ import {
     getGeminiChatAnswer,
     getGeminiStreamChatAnswer,
     getGeminiContentAnswer,
+    getGeminiStreamContentAnswer,
     updateConversationInfo,
     removeConversationAndChats,
 } from '../../(pages)/chat/slice'
@@ -169,13 +170,23 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
 
     const handleRetry = () => {
         if (modelType == GeminiModel.geminiProVision) {
-            dispatch(
-                getGeminiContentAnswer({
-                    history,
-                    conversationId,
-                    conversation,
-                })
-            )
+            if (Number(queryIsStream) == 1) {
+                dispatch(
+                    getGeminiStreamContentAnswer({
+                        history,
+                        conversationId,
+                        conversation,
+                    })
+                )
+            } else {
+                dispatch(
+                    getGeminiContentAnswer({
+                        history,
+                        conversationId,
+                        conversation,
+                    })
+                )
+            }
         } else {
             if (Number(queryIsStream) == 1) {
                 dispatch(

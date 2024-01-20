@@ -3,12 +3,18 @@ import type { NextRequest } from 'next/server'
 import { headers } from 'next/headers'
 import { get } from '@vercel/edge-config';
 import { decrypt } from './app/shared/utils';
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 const errorResponseJson = {
     status: false,
     error: `please provide your token or api key`
 }
 export async function middleware(request: NextRequest) {
+    // 没有配置 EDGE_CONFIG 的情况下，默认放过
+    const { EDGE_CONFIG = '' } = process.env || {}
+    if(!EDGE_CONFIG) return;
+
     const headersList = headers()
     const geminichatup_user = headersList.get(`geminichatup-user`)|| headersList.get(`Geminichatup-User`)
     const geminichatup_token = headersList.get(`geminichatup-token`) || headersList.get(`Geminichatup-Token`)

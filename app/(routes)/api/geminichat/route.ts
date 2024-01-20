@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GeminiChat, GeminiStreamChat, IGeminiChatProps, IGeminiStreamChatProps } from '../../gemini'
 import { ISafetySetting, IGenerationConfig, IChatItem } from '../../gemini/interface'
 import { headers } from 'next/headers'
+
+export const runtime = 'edge'
+
 export async function GET(request: NextRequest) {
     const inputText = request.nextUrl?.searchParams?.get('inputtext') || ''
     const headersList = headers()

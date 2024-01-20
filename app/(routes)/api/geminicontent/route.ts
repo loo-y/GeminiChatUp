@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GeminiContent, IGeminiContentProps, GeminiStreamContent, IGeminiStreamContentProps } from '../../gemini'
-import { ISafetySetting, IGenerationConfig, IChatItem } from '../../gemini/interface'
-import { Part } from '@google/generative-ai'
+
+export const runtime = 'edge'
 export async function GET(request: NextRequest) {
     const prompt = request.nextUrl?.searchParams?.get('prompt') || ''
     const modelResponse = await getGeminiResponse({
@@ -13,6 +13,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    // // @ts-ignore
+    // if(typeof EdgeRuntime != `undefined`){
+    //     // @ts-ignore
+    //     console.log(`EdgeRuntime`, EdgeRuntime)
+    // }
     const body = await request.json()
     const { parts, generationConfig, safetySettings, isStream } = body || {}
 

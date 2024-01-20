@@ -10,8 +10,8 @@ import _ from 'lodash'
 import { ISafetySetting, IGenerationConfig, IChatItem, IGeminiTokenCountProps, Roles } from './interface'
 import { inputTokenLimit } from '@/app/shared/constants'
 import { GeminiModel } from './interface'
-import * as dotenv from 'dotenv'
-dotenv.config()
+// import * as dotenv from 'dotenv'
+// dotenv.config()
 
 const { GOOGLE_GEMINI_API_KEY = '' } = process.env || {}
 

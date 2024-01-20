@@ -83,3 +83,29 @@ export const decrypt = async (encryptedText: string): Promise<string> => {
     const decryptedText = decoder.decode(decryptedData)
     return decryptedText
 }
+
+export const getFromLocalStorage = <T>(key: string): T | null => {
+    const isBrowser = typeof window !== 'undefined'
+    if (!isBrowser) return null
+    const item = localStorage.getItem(key)
+    if (item) {
+        try {
+            return JSON.parse(item) as T
+        } catch (error) {
+            console.error(`Error parsing item from localStorage (${key}):`, error)
+            return null
+        }
+    }
+    return null
+}
+
+export const setToLocalStorage = <T>(key: string, value: T): void => {
+    const isBrowser = typeof window !== 'undefined'
+    if (!isBrowser) return
+    try {
+        const serializedValue = JSON.stringify(value)
+        localStorage.setItem(key, serializedValue)
+    } catch (error) {
+        console.error(`Error serializing item for localStorage (${key}):`, error)
+    }
+}

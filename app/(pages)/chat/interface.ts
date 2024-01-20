@@ -1,4 +1,4 @@
-import { IChatItem, IImageItem } from '@/app/shared/interfaces'
+import { APICredentials, IChatItem, IImageItem } from '@/app/shared/interfaces'
 import type { DBConversation } from '@/app/shared/db'
 export interface IConversation
     extends Partial<
@@ -25,7 +25,14 @@ export interface IConversation
     modelAvatar?: string
 }
 
-export interface ChatState {
+export interface ICredentialsInfo {
+    geminiUserName?: string
+    geminiUserToken?: string
+    customGeminiAPI?: string
+    useAPICredentials?: APICredentials
+}
+
+export interface ChatState extends ICredentialsInfo {
     requestInQueueFetching: boolean
     conversationList: IConversation[]
     imageResourceList: IImageItem[]

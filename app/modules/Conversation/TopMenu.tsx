@@ -11,6 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu'
+import GlobalOptions from './GlobalOptions'
 import { GeminiModel } from '@/app/shared/interfaces'
 
 const TopMenu = ({ clickCallback }: { clickCallback?: () => void }) => {
@@ -26,7 +27,7 @@ const TopMenu = ({ clickCallback }: { clickCallback?: () => void }) => {
     }
 
     return (
-        <div className="flex">
+        <div className="flex justify-between w-full items-center">
             <DropdownMenu>
                 <DropdownMenuTrigger>
                     <div className="font-bold px-2 py-2 border rounded-xl bg-gray-50 hover:bg-gray-100 focus:bg-gray-100">
@@ -38,6 +39,9 @@ const TopMenu = ({ clickCallback }: { clickCallback?: () => void }) => {
                     <DropdownMenuItem onClick={handleAddProVisionContext}>Vision Content</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+            <div className="flex ml-auto items-center">
+                <GlobalOptions />
+            </div>
         </div>
     )
 }

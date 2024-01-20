@@ -6,3 +6,5 @@ export const inputTokenLimit = {
 }
 
 export const imageSizeLimition = 1000000 // byte
+
+export const CredentialsInfoLocalstoreKey = `CredentialsInfo`

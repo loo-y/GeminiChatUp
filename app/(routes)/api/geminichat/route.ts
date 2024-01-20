@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GeminiChat, GeminiStreamChat, IGeminiChatProps, IGeminiStreamChatProps } from '../../gemini'
 import { ISafetySetting, IGenerationConfig, IChatItem } from '../../gemini/interface'
+import { headers } from 'next/headers'
 export async function GET(request: NextRequest) {
     const inputText = request.nextUrl?.searchParams?.get('inputtext') || ''
+    const headersList = headers()
+    const customGeminiAPIKey = headersList.get(`x-geminipro-api`) || headersList.get(`X-Geminipro-Api`)
     const modelResponse = await getGeminiResponse({
         inputText,
+        customGeminiAPIKey: customGeminiAPIKey || undefined,
     })
     const response = NextResponse.json({ ...modelResponse }, { status: 200 })
     response.headers.set('Access-Control-Allow-Origin', '*')
@@ -12,6 +16,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const headersList = headers()
+    const customGeminiAPIKey = headersList.get(`x-geminipro-api`) || headersList.get(`X-Geminipro-Api`)
     const body = await request.json()
     const { history, inputText, generationConfig, safetySettings, isStream } = body || {}
 
@@ -22,6 +28,7 @@ export async function POST(request: NextRequest) {
             inputText,
             generationConfig,
             safetySettings,
+            customGeminiAPIKey: customGeminiAPIKey || undefined,
         })
     }
 
@@ -30,18 +37,26 @@ export async function POST(request: NextRequest) {
         inputText,
         generationConfig,
         safetySettings,
+        customGeminiAPIKey: customGeminiAPIKey || undefined,
     })
     const response = NextResponse.json({ ...modelResponse }, { status: 200 })
     response.headers.set('Access-Control-Allow-Origin', '*')
     return response
 }
 
-const getGeminiResponse = async ({ history, inputText, generationConfig, safetySettings }: IGeminiChatProps) => {
+const getGeminiResponse = async ({
+    history,
+    inputText,
+    generationConfig,
+    safetySettings,
+    customGeminiAPIKey,
+}: IGeminiChatProps) => {
     const modelResponse = await GeminiChat({
         history,
         inputText: inputText || ``,
         generationConfig,
         safetySettings,
+        customGeminiAPIKey,
     })
 
     return modelResponse
@@ -52,6 +67,7 @@ const getGeminiSSEResponse = ({
     inputText,
     generationConfig,
     safetySettings,
+    customGeminiAPIKey,
 }: Partial<IGeminiStreamChatProps>) => {
     // 将 SSE 数据编码为 Uint8Array
     const encoder = new TextEncoder()
@@ -80,6 +96,7 @@ const getGeminiSSEResponse = ({
         inputText: inputText || ``,
         generationConfig,
         safetySettings,
+        customGeminiAPIKey,
         streamHanler: ({ token, error, status }) => {
             if (status) {
                 writer.write(eventMsgHeader)

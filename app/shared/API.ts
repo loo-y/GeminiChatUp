@@ -1,19 +1,41 @@
 import _ from 'lodash'
-import { IChatItem, IGenerationConfig, ISafetySetting, IGeminiTokenCountProps } from '../shared/interfaces'
-import { fetchTimeout } from './utils'
+import {
+    IChatItem,
+    IGenerationConfig,
+    ISafetySetting,
+    IGeminiTokenCountProps,
+    APICredentials,
+} from '../shared/interfaces'
+import { getFromLocalStorage, fetchTimeout } from './utils'
 import { Part } from '@google/generative-ai'
 import { encrypt } from './utils'
+import { ICredentialsInfo } from '../(pages)/chat/interface'
+import { CredentialsInfoLocalstoreKey } from './constants'
 
 export const getCommonOptions = async () => {
-    const userToken = await encrypt(`guest123456`)
-    return {
-        method: 'POST',
-        headers: {
+    const credentialsInfo = getFromLocalStorage<ICredentialsInfo>(CredentialsInfoLocalstoreKey)
+    const { geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials } = credentialsInfo || {}
+    const userToken =
+        useAPICredentials == APICredentials.userToken && geminiUserToken ? await encrypt(geminiUserToken) : undefined
+    const userName = useAPICredentials == APICredentials.userToken && geminiUserName ? geminiUserName : undefined
+    const geminiapi =
+        useAPICredentials == APICredentials.customAPI && customGeminiAPI ? await encrypt(customGeminiAPI) : undefined
+
+    const headers = _.omitBy(
+        {
             'Content-Type': 'application/json',
-            'geminichatup-user': 'guest',
+            'geminichatup-user': userName,
             'geminichatup-token': userToken,
+            'geminichatup-api': geminiapi,
         },
+        _.isUndefined
+    ) as Record<string, string>
+
+    let options = {
+        method: 'POST',
+        headers,
     }
+    return options
 }
 
 export const fetchGeminiChat = async ({

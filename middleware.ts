@@ -26,6 +26,17 @@ export async function middleware(request: NextRequest) {
         if(!user_token_in_edge_config || user_token_in_edge_config !== decodeToken){
             return NextResponse.json(errorResponseJson)
         }
+    }else if(geminichatup_api){
+        const requestHeaders = new Headers(request.headers)
+        const customGeminiAPI = await decrypt(geminichatup_api)
+        requestHeaders.set('x-geminipro-api', customGeminiAPI)
+        const response = NextResponse.next({
+            request: {
+              // New request headers
+              headers: requestHeaders,
+            },
+          })
+          return response   
     }
 }
  

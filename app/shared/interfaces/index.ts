@@ -5,6 +5,11 @@ export enum Roles {
     model = `model`,
 }
 
+export enum APICredentials {
+    customAPI = `customAPI`,
+    userToken = `userToken`,
+}
+
 export enum GeminiModel {
     geminiPro = `gemini-pro`,
     geminiProVision = `gemini-pro-vision`,
@@ -43,4 +48,5 @@ export interface IGeminiTokenCountProps {
     parts?: Part[]
     history?: Pick<IChatItem, 'role' | 'parts'>[]
     limit?: number
+    customGeminiAPIKey?: string
 }

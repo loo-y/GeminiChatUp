@@ -16,8 +16,8 @@ dotenv.config()
 const { GOOGLE_GEMINI_API_KEY = '' } = process.env || {}
 
 const genAI = new GoogleGenerativeAI(GOOGLE_GEMINI_API_KEY)
-const model = genAI.getGenerativeModel({ model: GeminiModel.geminiPro })
-const modelProVision = genAI.getGenerativeModel({ model: GeminiModel.geminiProVision })
+let model = genAI.getGenerativeModel({ model: GeminiModel.geminiPro })
+let modelProVision = genAI.getGenerativeModel({ model: GeminiModel.geminiProVision })
 
 const defaultGenerationConfig: IGenerationConfig = {
     temperature: 0.9,
@@ -51,6 +51,7 @@ export interface IGeminiChatProps {
     history?: IChatItem[]
     inputText: string
     isStream?: boolean
+    customGeminiAPIKey?: string
 }
 
 export const GeminiChat = async ({
@@ -59,6 +60,7 @@ export const GeminiChat = async ({
     history,
     inputText,
     isStream,
+    customGeminiAPIKey,
 }: IGeminiChatProps) => {
     let error = `input text is required.`
     if (!inputText)
@@ -95,6 +97,12 @@ export const GeminiChat = async ({
     }
 
     try {
+        if (customGeminiAPIKey) {
+            const customGenAI = new GoogleGenerativeAI(customGeminiAPIKey)
+            model = customGenAI.getGenerativeModel({ model: GeminiModel.geminiPro })
+        } else {
+            model = genAI.getGenerativeModel({ model: GeminiModel.geminiPro })
+        }
         const chat = model.startChat(params)
 
         const currentHistory = await chat.getHistory()
@@ -147,6 +155,7 @@ export const GeminiStreamChat = async ({
     inputText,
     streamHanler,
     completeHandler,
+    customGeminiAPIKey,
 }: IGeminiStreamChatProps) => {
     let error = `input text is required.`
     if (!inputText) {
@@ -187,6 +196,12 @@ export const GeminiStreamChat = async ({
     }
 
     try {
+        if (customGeminiAPIKey) {
+            const customGenAI = new GoogleGenerativeAI(customGeminiAPIKey)
+            model = customGenAI.getGenerativeModel({ model: GeminiModel.geminiPro })
+        } else {
+            model = genAI.getGenerativeModel({ model: GeminiModel.geminiPro })
+        }
         const chat = model.startChat(params)
 
         const streamResult = await chat.sendMessageStream(inputText)
@@ -225,6 +240,7 @@ export interface IGeminiContentProps {
     prompt?: string
     parts?: Part[]
     isStream?: boolean
+    customGeminiAPIKey?: string
 }
 export const GeminiContent = async ({
     generationConfig,
@@ -232,6 +248,7 @@ export const GeminiContent = async ({
     parts,
     isStream,
     prompt,
+    customGeminiAPIKey,
 }: IGeminiContentProps) => {
     let error = `promopt text is required.`
     if (_.isEmpty(parts) && !prompt) {
@@ -275,6 +292,12 @@ export const GeminiContent = async ({
     }
 
     try {
+        if (customGeminiAPIKey) {
+            const customGenAI = new GoogleGenerativeAI(customGeminiAPIKey)
+            modelProVision = customGenAI.getGenerativeModel({ model: GeminiModel.geminiProVision })
+        } else {
+            modelProVision = genAI.getGenerativeModel({ model: GeminiModel.geminiProVision })
+        }
         const result = hasImage ? await modelProVision.generateContent(params) : await model.generateContent(params)
         const { totalTokens } = await modelProVision.countTokens(inputParts)
         const response = result.response
@@ -306,6 +329,7 @@ export const GeminiStreamContent = async ({
     prompt,
     streamHanler,
     completeHandler,
+    customGeminiAPIKey,
 }: IGeminiStreamContentProps) => {
     let error = `promopt text is required.`
     if (_.isEmpty(parts) && !prompt) {
@@ -352,6 +376,13 @@ export const GeminiStreamContent = async ({
     }
 
     try {
+        if (customGeminiAPIKey) {
+            const customGenAI = new GoogleGenerativeAI(customGeminiAPIKey)
+            modelProVision = customGenAI.getGenerativeModel({ model: GeminiModel.geminiProVision })
+        } else {
+            modelProVision = genAI.getGenerativeModel({ model: GeminiModel.geminiProVision })
+        }
+
         const streamResult = hasImage
             ? await modelProVision.generateContentStream(params)
             : await model.generateContentStream(params)
@@ -383,13 +414,26 @@ export const GeminiStreamContent = async ({
     return
 }
 
-export const GeminiTokenCount = async ({ prompt, parts, history, limit }: IGeminiTokenCountProps) => {
+export const GeminiTokenCount = async ({
+    prompt,
+    parts,
+    history,
+    limit,
+    customGeminiAPIKey,
+}: IGeminiTokenCountProps) => {
     let totalTokens = 0,
         validIndex = 0,
         countTokensResult
 
     if (!prompt && !parts?.length && !history?.length) {
         return { totalTokens }
+    }
+
+    if (customGeminiAPIKey) {
+        const customGenAI = new GoogleGenerativeAI(customGeminiAPIKey)
+        model = customGenAI.getGenerativeModel({ model: GeminiModel.geminiPro })
+    } else {
+        model = genAI.getGenerativeModel({ model: GeminiModel.geminiPro })
     }
 
     if (parts?.length) {

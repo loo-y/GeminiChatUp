@@ -2,12 +2,18 @@ import _ from 'lodash'
 import { IChatItem, IGenerationConfig, ISafetySetting, IGeminiTokenCountProps } from '../shared/interfaces'
 import { fetchTimeout } from './utils'
 import { Part } from '@google/generative-ai'
+import { encrypt } from './utils'
 
-const commonOptions = {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
+export const getCommonOptions = async () => {
+    const userToken = await encrypt(`guest123456`)
+    return {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'geminichatup-user': 'guest',
+            'geminichatup-token': userToken,
+        },
+    }
 }
 
 export const fetchGeminiChat = async ({
@@ -35,6 +41,7 @@ export const fetchGeminiChat = async ({
 
     let result = {}
     try {
+        const commonOptions = await getCommonOptions()
         const response = await Promise.race([
             fetch('/api/geminichat', {
                 ...commonOptions,
@@ -86,6 +93,7 @@ export const fetchGeminiContent = async ({
         status: true,
     } as Record<string, any>
     try {
+        const commonOptions = await getCommonOptions()
         const response = await Promise.race([
             fetch('/api/geminicontent', {
                 ...commonOptions,
@@ -129,6 +137,7 @@ export const fetchTokenCount = async ({ history, prompt, parts, limit }: IGemini
     let result: { totalTokens?: number; validIndex?: number } = {}
 
     try {
+        const commonOptions = await getCommonOptions()
         const response = await Promise.race([
             fetch('/api/geminitokens', {
                 ...commonOptions,

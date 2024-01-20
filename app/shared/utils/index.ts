@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+// import crypto from 'crypto';
 export const sleep = (sec: number) =>
     new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -34,4 +35,51 @@ export const getPureDataFromImageBase64 = (base64Data: string) => {
         return base64Data.substring(checkValueIndex + checkValue.length)
     }
     return base64Data
+}
+
+const secretKey = 'gemini-chat-up'.padStart(32, '0') // 密钥
+
+const getCryptKey = async (secretKey: string): Promise<CryptoKey> => {
+    return new Promise((resolve, reject) => {
+        crypto.subtle
+            .importKey('raw', new TextEncoder().encode(secretKey), { name: 'PBKDF2' }, false, ['deriveKey'])
+            .then(baseKey =>
+                crypto.subtle.deriveKey(
+                    { name: 'PBKDF2', salt: new Uint8Array(16), iterations: 100000, hash: 'SHA-256' },
+                    baseKey,
+                    // @ts-ignore
+                    { name: 'AES-CTR', counter: new Uint8Array(16), length: 128 },
+                    false,
+                    ['encrypt', 'decrypt']
+                )
+            )
+            .then(key => {
+                resolve(key)
+            })
+    })
+}
+export const encrypt = async (text: string): Promise<string> => {
+    const key: CryptoKey = await getCryptKey(secretKey)
+    const encoder = new TextEncoder()
+    const data = encoder.encode(text)
+    const iv = window.crypto.getRandomValues(new Uint8Array(16))
+    const encryptedData = await crypto.subtle.encrypt({ name: 'AES-CTR', counter: iv, length: 128 }, key, data)
+    const encryptedArray = Array.from(new Uint8Array(encryptedData))
+    const encryptedHex = encryptedArray.map(byte => byte.toString(16).padStart(2, '0')).join('')
+    const ivHex = Array.from(iv)
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('')
+    return `${ivHex}:${encryptedHex}`
+}
+export const decrypt = async (encryptedText: string): Promise<string> => {
+    const key: CryptoKey = await getCryptKey(secretKey)
+    const [ivHex, encryptedHex] = encryptedText.split(':')
+    const iv = Uint8Array.from(ivHex.match(/.{2}/g)?.map(byte => parseInt(byte, 16)) || [])
+    const encryptedArray = encryptedHex.match(/.{2}/g)?.map(byte => parseInt(byte, 16))
+    if (!encryptedArray) throw new Error('Invalid encrypted text')
+    const encryptedData = new Uint8Array(encryptedArray)
+    const decryptedData = await crypto.subtle.decrypt({ name: 'AES-CTR', counter: iv, length: 128 }, key, encryptedData)
+    const decoder = new TextDecoder()
+    const decryptedText = decoder.decode(decryptedData)
+    return decryptedText
 }

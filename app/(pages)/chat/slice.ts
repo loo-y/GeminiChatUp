@@ -560,7 +560,8 @@ export const getGeminiChatAnswer = createAsyncThunk(
 
 export const initiaStateFromDB = createAsyncThunk(
     'chatSlice/initiaStateFromDB',
-    async (params, { dispatch, getState }: any) => {
+    async ({ needAPICredentials }: Record<string, any>, { dispatch, getState }: any) => {
+        console.log(`needAPICredentials`, needAPICredentials)
         const chatState: ChatState = getChatState(getState())
         const conversationList = await initialConversionList()
         const imageResourceList = await initialImageResoureFromDB()
@@ -568,6 +569,7 @@ export const initiaStateFromDB = createAsyncThunk(
             updateState({
                 conversationList,
                 imageResourceList,
+                needAPICredentials: !!needAPICredentials,
             })
         )
     }

@@ -12,10 +12,10 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/app/comp
 export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }: { serverSideData: any }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
-
+    const { needAPICredentials } = serverSideData || {}
     const [virtualHeight, setVirtualHeight] = useState(0)
     useEffect(() => {
-        dispatch(initiaStateFromDB())
+        dispatch(initiaStateFromDB({ needAPICredentials }))
 
         let vh = window.innerHeight * 0.01
         // Then we set the value in the --vh custom property to the root of the document
@@ -63,10 +63,10 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
     )
 }
 
-export default function ChatPage() {
+export default function ChatPage({ needAPICredentials }: { needAPICredentials?: boolean }) {
     return (
         <Provider store={store}>
-            <Chat serverSideData={null} />
+            <Chat serverSideData={{ needAPICredentials }} />
         </Provider>
     )
 }

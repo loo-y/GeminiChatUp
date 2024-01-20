@@ -30,4 +30,5 @@ export interface ChatState {
     conversationList: IConversation[]
     imageResourceList: IImageItem[]
     inputImageList: IImageItem[]
+    needAPICredentials?: boolean
 }

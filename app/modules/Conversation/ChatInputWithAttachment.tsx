@@ -7,14 +7,17 @@ import {
     getGeminiContentAnswer,
     deleteImageFromInput,
     archiveConversationHistory,
+    updateCredentialsInfo,
 } from '../../(pages)/chat/slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import { IConversation } from '../../(pages)/chat/interface'
-import { IChatItem, IImageItem } from '@/app/shared/interfaces'
+import { IConversation, ICredentialsInfo } from '../../(pages)/chat/interface'
+import { APICredentials, IChatItem, IImageItem } from '@/app/shared/interfaces'
 import UploadImageButton from './UploadImageButton'
 import { Dialog, DialogContent } from '@/app/components/ui/dialog'
 import ChatImagePreview from './ChatImagePreview'
 import { useSearchParams } from 'next/navigation'
+import { GlobalOptionsMain, IGlobalOptionsMain } from './GlobalOptions'
+import { Drawer, DrawerContent } from '@/app/components/ui/drawer'
 
 const ChatInputWithAttachment = ({
     conversation,
@@ -25,8 +28,9 @@ const ChatInputWithAttachment = ({
 }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
-    const { inputImageList } = state || {}
+    const { inputImageList, geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials } = state || {}
     const [isComposing, setIsComposing] = useState(false)
+    const [showGlobalOptions, setShowGlobalOptions] = useState<boolean | 'mobileScreen' | 'desktopScreen'>(false)
     const [inputValue, setInputValue] = useState<string>('')
     const [inputRows, setInputRows] = useState<number>(1)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -90,6 +94,16 @@ const ChatInputWithAttachment = ({
             if (_.last(_history)?.role === 'user') {
                 _history.pop() // 移除最后一条记录
             }
+            if (
+                (useAPICredentials == APICredentials.customAPI && !customGeminiAPI) ||
+                (useAPICredentials == APICredentials.userToken && (!geminiUserName || !geminiUserToken)) ||
+                !((geminiUserName && geminiUserToken) || customGeminiAPI)
+            ) {
+                const isMobileScreen = window.innerWidth <= 768
+                setShowGlobalOptions(isMobileScreen ? 'mobileScreen' : 'desktopScreen')
+                return
+            }
+
             if (attachable) {
                 dispatch(
                     getGeminiContentAnswer({
@@ -140,6 +154,15 @@ const ChatInputWithAttachment = ({
 
     const handleArchived = () => {
         dispatch(archiveConversationHistory(conversation))
+    }
+
+    const handleConfirmDialog = (valueObj: Partial<ICredentialsInfo>) => {
+        setShowGlobalOptions(false)
+        dispatch(updateCredentialsInfo(valueObj))
+    }
+    const handleConfirmDrawer = (valueObj: Partial<ICredentialsInfo>) => {
+        setShowGlobalOptions(false)
+        dispatch(updateCredentialsInfo(valueObj))
     }
 
     const showImages = attachable && !_.isEmpty(inputImageList)
@@ -213,6 +236,32 @@ const ChatInputWithAttachment = ({
                     </div>
                 </div>
             </div>
+            {showGlobalOptions == 'mobileScreen' ? (
+                <Drawer open={showGlobalOptions == 'mobileScreen'}>
+                    <DrawerContent>
+                        <GlobalOptionsMain
+                            confirmCallback={handleConfirmDrawer}
+                            geminiUserName={geminiUserName}
+                            geminiUserToken={geminiUserToken}
+                            customGeminiAPI={customGeminiAPI}
+                            useAPICredentials={useAPICredentials}
+                        />
+                    </DrawerContent>
+                </Drawer>
+            ) : null}
+            {showGlobalOptions == 'desktopScreen' ? (
+                <Dialog open={showGlobalOptions == 'desktopScreen'}>
+                    <DialogContent>
+                        <GlobalOptionsMain
+                            confirmCallback={handleConfirmDialog}
+                            geminiUserName={geminiUserName}
+                            geminiUserToken={geminiUserToken}
+                            customGeminiAPI={customGeminiAPI}
+                            useAPICredentials={useAPICredentials}
+                        />
+                    </DialogContent>
+                </Dialog>
+            ) : null}
         </>
     )
 }

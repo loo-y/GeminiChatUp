@@ -81,12 +81,12 @@ const GlobalOptions = () => {
 
 export default GlobalOptions
 
-interface IGlobalOptionsMain extends ICredentialsInfo {
+export interface IGlobalOptionsMain extends ICredentialsInfo {
     className?: string
     confirmCallback: (valueObj: Partial<ICredentialsInfo>) => void
 }
 
-const GlobalOptionsMain = ({
+export const GlobalOptionsMain = ({
     className,
     confirmCallback,
     geminiUserName,

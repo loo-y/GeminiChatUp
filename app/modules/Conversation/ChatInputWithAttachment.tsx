@@ -28,7 +28,8 @@ const ChatInputWithAttachment = ({
 }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
-    const { inputImageList, geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials } = state || {}
+    const { inputImageList, geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials, needAPICredentials } =
+        state || {}
     const [isComposing, setIsComposing] = useState(false)
     const [showGlobalOptions, setShowGlobalOptions] = useState<boolean | 'mobileScreen' | 'desktopScreen'>(false)
     const [inputValue, setInputValue] = useState<string>('')
@@ -95,9 +96,10 @@ const ChatInputWithAttachment = ({
                 _history.pop() // 移除最后一条记录
             }
             if (
-                (useAPICredentials == APICredentials.customAPI && !customGeminiAPI) ||
-                (useAPICredentials == APICredentials.userToken && (!geminiUserName || !geminiUserToken)) ||
-                !((geminiUserName && geminiUserToken) || customGeminiAPI)
+                needAPICredentials &&
+                ((useAPICredentials == APICredentials.customAPI && !customGeminiAPI) ||
+                    (useAPICredentials == APICredentials.userToken && (!geminiUserName || !geminiUserToken)) ||
+                    !((geminiUserName && geminiUserToken) || customGeminiAPI))
             ) {
                 const isMobileScreen = window.innerWidth <= 768
                 setShowGlobalOptions(isMobileScreen ? 'mobileScreen' : 'desktopScreen')

@@ -408,7 +408,7 @@ const DrawerChatList = () => {
                     onClick={handleClickOptions}
                     ref={optionsRef}
                 >
-                    <img src="/images/options.svg" className="h-6 w-6" />
+                    <img src="/images/unfold-more.svg" className="h-6 w-6" />
                 </div>
             </DrawerTrigger>
             <DrawerContent>

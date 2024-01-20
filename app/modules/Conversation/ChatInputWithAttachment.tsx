@@ -237,7 +237,12 @@ const ChatInputWithAttachment = ({
                 </div>
             </div>
             {showGlobalOptions == 'mobileScreen' ? (
-                <Drawer open={showGlobalOptions == 'mobileScreen'}>
+                <Drawer
+                    open={showGlobalOptions == 'mobileScreen'}
+                    onOpenChange={status => {
+                        setShowGlobalOptions(!status ? false : 'mobileScreen')
+                    }}
+                >
                     <DrawerContent>
                         <GlobalOptionsMain
                             confirmCallback={handleConfirmDrawer}
@@ -250,7 +255,12 @@ const ChatInputWithAttachment = ({
                 </Drawer>
             ) : null}
             {showGlobalOptions == 'desktopScreen' ? (
-                <Dialog open={showGlobalOptions == 'desktopScreen'}>
+                <Dialog
+                    open={showGlobalOptions == 'desktopScreen'}
+                    onOpenChange={status => {
+                        setShowGlobalOptions(!status ? false : 'desktopScreen')
+                    }}
+                >
                     <DialogContent>
                         <GlobalOptionsMain
                             confirmCallback={handleConfirmDialog}

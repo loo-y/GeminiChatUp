@@ -5,9 +5,7 @@ import _ from 'lodash'
 import {
     getChatState,
     getGeminiChatAnswer,
-    getGeminiStreamChatAnswer,
     getGeminiContentAnswer,
-    getGeminiStreamContentAnswer,
     updateConversationInfo,
     removeConversationAndChats,
 } from '../../(pages)/chat/slice'

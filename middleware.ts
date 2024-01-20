@@ -3,8 +3,6 @@ import type { NextRequest } from 'next/server'
 import { headers } from 'next/headers'
 import { get } from '@vercel/edge-config';
 import { decrypt } from './app/shared/utils';
-import * as dotenv from 'dotenv'
-dotenv.config()
 
 const errorResponseJson = {
     status: false,

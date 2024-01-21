@@ -28,8 +28,15 @@ const ChatInputWithAttachment = ({
 }) => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
-    const { inputImageList, geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials, needAPICredentials } =
-        state || {}
+    const {
+        inputImageList,
+        geminiUserName,
+        geminiUserToken,
+        customGeminiAPI,
+        useAPICredentials,
+        needAPICredentials,
+        useStream,
+    } = state || {}
     const [isComposing, setIsComposing] = useState(false)
     const [showGlobalOptions, setShowGlobalOptions] = useState<boolean | 'mobileScreen' | 'desktopScreen'>(false)
     const [inputValue, setInputValue] = useState<string>('')
@@ -253,6 +260,7 @@ const ChatInputWithAttachment = ({
                             geminiUserToken={geminiUserToken}
                             customGeminiAPI={customGeminiAPI}
                             useAPICredentials={useAPICredentials}
+                            useStream={useStream}
                         />
                     </DrawerContent>
                 </Drawer>
@@ -271,6 +279,7 @@ const ChatInputWithAttachment = ({
                             geminiUserToken={geminiUserToken}
                             customGeminiAPI={customGeminiAPI}
                             useAPICredentials={useAPICredentials}
+                            useStream={useStream}
                         />
                     </DialogContent>
                 </Dialog>

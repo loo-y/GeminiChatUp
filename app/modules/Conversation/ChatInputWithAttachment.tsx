@@ -50,7 +50,7 @@ const ChatInputWithAttachment = ({
         const currentValue = event.target.value
         setInputValue(currentValue)
         const rows = currentValue.split('\n').length + (currentValue.match(/\n$/)?.[1] ? 1 : 0)
-        setInputRows(rows)
+        setInputRows(Math.min(rows, 4))
     }
 
     const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -62,7 +62,10 @@ const ChatInputWithAttachment = ({
             const { selectionStart, selectionEnd } = currentInputRef
             const newInputValue = inputValue.substring(0, selectionStart) + '\n' + inputValue.substring(selectionEnd)
             setInputValue(newInputValue)
-            setInputRows(value => value + 1)
+            // setInputRows(value => value + 1)
+            setInputRows(value => {
+                return Math.min(value + 1, 4)
+            })
             // 移动光标位置到插入换行符后
             const newSelectionStart = selectionStart + 1
             // 需要延时执行，否则无法定位，会被 setInputValue 后执行修改定位
@@ -113,7 +116,7 @@ const ChatInputWithAttachment = ({
                         conversationId,
                         conversation,
                         history: _history,
-                        inputText: inputValue,
+                        inputText: inputValue.replace(/\n/g, '\n\n'),
                         isStream: Number(queryIsStream) == 1,
                     })
                 )
@@ -123,7 +126,7 @@ const ChatInputWithAttachment = ({
                         conversationId,
                         conversation,
                         history: _history,
-                        inputText: inputValue,
+                        inputText: inputValue.replace(/\n/g, '\n\n'),
                         isStream: Number(queryIsStream) == 1,
                     })
                 )
@@ -203,7 +206,7 @@ const ChatInputWithAttachment = ({
                             </div>
                         </div>
                         <div className="flex flex-grow flex-row rounded-[2rem] border-2 border-green-600 bg-white pl-5 gap-1">
-                            <div className="flex my-1 flex-row flex-grow ml-2 bg-transparent">
+                            <div className="flex my-1 flex-row flex-grow ml-2 bg-transparent items-center">
                                 <textarea
                                     value={inputValue}
                                     ref={inputRef}
@@ -213,7 +216,7 @@ const ChatInputWithAttachment = ({
                                     style={{ resize: 'none' }}
                                     onCompositionStart={handleCompositionStart}
                                     onCompositionEnd={handleCompositionEnd}
-                                    className="block flex-grow bg-white outline-none py-2 w-full text-lg"
+                                    className="block flex-grow bg-white outline-none py-2 w-full text-sm md:text-lg"
                                     placeholder="Type your messeage here..."
                                     onBlur={handleBlur}
                                     onFocus={handleFocus}

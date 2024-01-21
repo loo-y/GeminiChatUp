@@ -173,7 +173,6 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
                     history,
                     conversationId,
                     conversation,
-                    isStream: Number(queryIsStream) == 1,
                 })
             )
         } else {
@@ -182,7 +181,6 @@ const ChatContent = ({ conversation }: IChatContentProps) => {
                     conversationId,
                     conversation,
                     history,
-                    isStream: Number(queryIsStream) == 1,
                 })
             )
         }

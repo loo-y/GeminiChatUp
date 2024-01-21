@@ -6,35 +6,28 @@ import { Label } from '@/app/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Button } from '@/app/components/ui/button'
 import { APICredentials } from '@/app/shared/interfaces'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/app/components/ui/dialog'
+import { Dialog, DialogContent, DialogTrigger } from '@/app/components/ui/dialog'
+import { Switch } from '@/app/components/ui/switch'
 import { ChangeEvent, useRef, useState } from 'react'
 import _ from 'lodash'
-import { updateCredentialsInfo, getChatState } from '@/app/(pages)/chat/slice'
-import { ICredentialsInfo } from '@/app/(pages)/chat/interface'
+import { updateGlobalOptionsInfo, getChatState } from '@/app/(pages)/chat/slice'
+import { IGlobalOptionsInfo } from '@/app/(pages)/chat/interface'
 
 const optionsImgUrl = `/images/options.svg`
 const GlobalOptions = () => {
     const dispatch = useAppDispatch()
     const state = useAppSelector(getChatState)
-    const { geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials } = state || {}
+    const { geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials, useStream } = state || {}
     const [openOptionsDialog, setopenOptionsDialog] = useState<boolean>(false)
     const [openOptionsDrawer, setopenOptionsDrawer] = useState<boolean>(false)
 
-    const handleConfirmDialog = (valueObj: Partial<ICredentialsInfo>) => {
+    const handleConfirmDialog = (valueObj: Partial<IGlobalOptionsInfo>) => {
         setopenOptionsDialog(false)
-        dispatch(updateCredentialsInfo(valueObj))
+        dispatch(updateGlobalOptionsInfo(valueObj))
     }
-    const handleConfirmDrawer = (valueObj: Partial<ICredentialsInfo>) => {
+    const handleConfirmDrawer = (valueObj: Partial<IGlobalOptionsInfo>) => {
         setopenOptionsDrawer(false)
-        dispatch(updateCredentialsInfo(valueObj))
+        dispatch(updateGlobalOptionsInfo(valueObj))
     }
 
     return (
@@ -53,6 +46,7 @@ const GlobalOptions = () => {
                             geminiUserToken={geminiUserToken}
                             customGeminiAPI={customGeminiAPI}
                             useAPICredentials={useAPICredentials}
+                            useStream={useStream}
                         />
                     </DialogContent>
                 </Dialog>
@@ -71,6 +65,7 @@ const GlobalOptions = () => {
                             geminiUserToken={geminiUserToken}
                             customGeminiAPI={customGeminiAPI}
                             useAPICredentials={useAPICredentials}
+                            useStream={useStream}
                         />
                     </DrawerContent>
                 </Drawer>
@@ -81,9 +76,10 @@ const GlobalOptions = () => {
 
 export default GlobalOptions
 
-export interface IGlobalOptionsMain extends ICredentialsInfo {
+export interface IGlobalOptionsMain extends IGlobalOptionsInfo {
     className?: string
-    confirmCallback: (valueObj: Partial<ICredentialsInfo>) => void
+    confirmCallback: (valueObj: Partial<IGlobalOptionsInfo>) => void
+    useStream?: boolean
 }
 
 export const GlobalOptionsMain = ({
@@ -93,12 +89,14 @@ export const GlobalOptionsMain = ({
     geminiUserToken,
     customGeminiAPI,
     useAPICredentials,
+    useStream,
 }: IGlobalOptionsMain) => {
     const selectRef = useRef(null)
     const [tempUseAPICredentials, setTempUseAPICredentials] = useState<APICredentials | undefined>(useAPICredentials)
     const [tempGeminiUserName, setTempGeminiUserName] = useState<string>(geminiUserName || '')
     const [tempGeminiUserToken, setTempGeminiUserToken] = useState<string>(geminiUserToken || '')
     const [tempCustomGeminiAPI, setTempCustomGeminiAPI] = useState<string>(customGeminiAPI || '')
+    const [tempUseStream, setTempUseStream] = useState<boolean>(useStream || false)
 
     const handleConfirm = () => {
         confirmCallback &&
@@ -107,6 +105,7 @@ export const GlobalOptionsMain = ({
                 geminiUserToken: _.trim(tempGeminiUserToken),
                 customGeminiAPI: _.trim(tempCustomGeminiAPI),
                 useAPICredentials: tempUseAPICredentials,
+                useStream: tempUseStream,
             })
     }
 
@@ -127,20 +126,36 @@ export const GlobalOptionsMain = ({
         let value = event?.currentTarget?.value
         setTempGeminiUserToken(value)
     }
+    const handleChangeStreamSwitch = (switchValue: boolean) => {
+        setTempUseStream(switchValue)
+    }
     return (
-        <div className={`flex w-full px-4 py-4 ${className || ''}`}>
+        <div className={`flex w-full px-4 py-4 ${className || ''}`} tabIndex={0}>
             <div className="grid w-full items-center gap-4">
-                <div className="flex flex-col w-full space-y-1.5 gap-2">
-                    <Label htmlFor="gemini_api_credentials_select">API Credentials</Label>
-                    <Select onValueChange={handleChangeSelection} value={tempUseAPICredentials || undefined}>
-                        <SelectTrigger id="gemini_api_credentials_select">
-                            <SelectValue placeholder="Select API Credentials" />
-                        </SelectTrigger>
-                        <SelectContent position="popper">
-                            <SelectItem value={APICredentials.customAPI}>Self Gemini Pro API Key</SelectItem>
-                            <SelectItem value={APICredentials.userToken}>Username & Password</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="flex flex-col w-full space-y-1.5 gap-3">
+                    <div className="flex flex-row gap-2 items-center justify-between">
+                        <div className="flex flex-col gap-1">
+                            <Label htmlFor="use_stream_switch">Use Stream</Label>
+                            <div className="text-sm text-gray-500">use streaming API calls for conversations</div>
+                        </div>
+                        <Switch
+                            id={`use_stream_switch`}
+                            checked={!!tempUseStream}
+                            onCheckedChange={handleChangeStreamSwitch}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Label htmlFor="gemini_api_credentials_select">API Credentials</Label>
+                        <Select onValueChange={handleChangeSelection} value={tempUseAPICredentials || undefined}>
+                            <SelectTrigger id="gemini_api_credentials_select">
+                                <SelectValue placeholder="Select API Credentials" />
+                            </SelectTrigger>
+                            <SelectContent position="popper">
+                                <SelectItem value={APICredentials.customAPI}>Self Gemini Pro API Key</SelectItem>
+                                <SelectItem value={APICredentials.userToken}>Username & Password</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
                 {tempUseAPICredentials == APICredentials.userToken ? (
                     <>

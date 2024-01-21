@@ -9,12 +9,12 @@ import {
 import { getFromLocalStorage, fetchTimeout } from './utils'
 import { Part } from '@google/generative-ai'
 import { encrypt } from './utils'
-import { ICredentialsInfo } from '../(pages)/chat/interface'
-import { CredentialsInfoLocalstoreKey } from './constants'
+import { IGlobalOptionsInfo } from '../(pages)/chat/interface'
+import { globalOptionsInfoStoreKey } from './constants'
 
 export const getCommonOptions = async () => {
-    const credentialsInfo = getFromLocalStorage<ICredentialsInfo>(CredentialsInfoLocalstoreKey)
-    const { geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials } = credentialsInfo || {}
+    const globalOptionsInfo = getFromLocalStorage<IGlobalOptionsInfo>(globalOptionsInfoStoreKey)
+    const { geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials } = globalOptionsInfo || {}
     const userToken =
         useAPICredentials == APICredentials.userToken && geminiUserToken ? await encrypt(geminiUserToken) : undefined
     const userName = useAPICredentials == APICredentials.userToken && geminiUserName ? geminiUserName : undefined

@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, original, PayloadAction } from '@reduxjs
 import type { AppState, AppThunk } from '@/app/store'
 import * as API from '@/app/shared/API'
 import { fetchGeminiChat, fetchTokenCount, fetchGeminiContent, getCommonOptions } from '@/app/shared/API'
-import { ChatState, IConversation, ICredentialsInfo } from './interface'
+import { ChatState, IConversation, IGlobalOptionsInfo } from './interface'
 // import _ from 'lodash' // use specific function from lodash
 import { map as _map } from 'lodash'
 import type { AsyncThunk } from '@reduxjs/toolkit'
@@ -16,7 +16,7 @@ import {
     getPureDataFromImageBase64,
     setToLocalStorage,
 } from '@/app/shared/utils'
-import { CredentialsInfoLocalstoreKey, defaultConversaionName, inputTokenLimit } from '@/app/shared/constants'
+import { globalOptionsInfoStoreKey, defaultConversaionName, inputTokenLimit } from '@/app/shared/constants'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 // define a queue to store api request
@@ -108,6 +108,7 @@ export const getGeminiContentAnswer = createAsyncThunk(
         { dispatch, getState }: any
     ) => {
         const chatState: ChatState = getChatState(getState())
+        const useStream = typeof isStream == `boolean` ? isStream : chatState.useStream || false
         const { imageResourceList } = chatState || {}
         let historyLimitTS = conversation.historyLimitTS || -1
         const suffix = ` \n `
@@ -208,7 +209,7 @@ export const getGeminiContentAnswer = createAsyncThunk(
 
         const { safetySettings, generationConfig } = getFetchSettingsFromConverstaion(conversation)
 
-        if (!isStream) {
+        if (!useStream) {
             dispatch(
                 makeApiRequestInQueue({
                     apiRequest: fetchGeminiContent.bind(null, {
@@ -342,6 +343,8 @@ export const getGeminiChatAnswer = createAsyncThunk(
         },
         { dispatch, getState }: any
     ) => {
+        const useStream = typeof isStream == `boolean` ? isStream : getChatState(getState()).useStream || false
+
         let historyLimitTS = conversation.historyLimitTS || -1
 
         let newChatItem: IChatItem | undefined = undefined
@@ -446,7 +449,7 @@ export const getGeminiChatAnswer = createAsyncThunk(
 
         const { safetySettings, generationConfig } = getFetchSettingsFromConverstaion(conversation)
 
-        if (!isStream) {
+        if (!useStream) {
             dispatch(
                 makeApiRequestInQueue({
                     apiRequest: fetchGeminiChat.bind(null, {
@@ -570,8 +573,9 @@ export const initiaStateFromDB = createAsyncThunk(
         const chatState: ChatState = getChatState(getState())
         const conversationList = await initialConversionList()
         const imageResourceList = await initialImageResoureFromDB()
-        const credentialsInfo = getFromLocalStorage<ICredentialsInfo>(CredentialsInfoLocalstoreKey)
-        const { geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials } = credentialsInfo || {}
+        const globalOptionsInfo = getFromLocalStorage<IGlobalOptionsInfo>(globalOptionsInfoStoreKey)
+        const { geminiUserName, geminiUserToken, customGeminiAPI, useAPICredentials, useStream } =
+            globalOptionsInfo || {}
         dispatch(
             updateState({
                 conversationList,
@@ -581,6 +585,7 @@ export const initiaStateFromDB = createAsyncThunk(
                 geminiUserToken,
                 customGeminiAPI,
                 useAPICredentials,
+                useStream,
             })
         )
     }
@@ -660,29 +665,36 @@ export const removeConversationAndChats = createAsyncThunk(
     }
 )
 
-export const updateCredentialsInfo = createAsyncThunk(
-    'chatSlice/updateCredentialsInfo',
+export const updateGlobalOptionsInfo = createAsyncThunk(
+    'chatSlice/updateGlobalOptionsInfo',
     async (
         params: Partial<
             Pick<
                 ChatState,
-                'needAPICredentials' | 'useAPICredentials' | 'geminiUserName' | 'geminiUserToken' | 'customGeminiAPI'
+                | 'needAPICredentials'
+                | 'useAPICredentials'
+                | 'geminiUserName'
+                | 'geminiUserToken'
+                | 'customGeminiAPI'
+                | 'useStream'
             >
         >,
         { dispatch, getState }: any
     ) => {
         const chatState: ChatState = getChatState(getState())
-        const { needAPICredentials, useAPICredentials, geminiUserName, geminiUserToken, customGeminiAPI } = params || {}
+        const { needAPICredentials, useAPICredentials, geminiUserName, geminiUserToken, customGeminiAPI, useStream } =
+            params || {}
         let updateInfo: Record<string, boolean | string | undefined> = {
             needAPICredentials,
             useAPICredentials,
             geminiUserName,
             geminiUserToken,
             customGeminiAPI,
+            useStream,
         }
         updateInfo = _.omitBy(updateInfo, _.isUndefined)
 
-        setToLocalStorage(CredentialsInfoLocalstoreKey, {
+        setToLocalStorage(globalOptionsInfoStoreKey, {
             ...updateInfo,
         })
 

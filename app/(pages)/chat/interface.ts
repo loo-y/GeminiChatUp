@@ -25,14 +25,15 @@ export interface IConversation
     modelAvatar?: string
 }
 
-export interface ICredentialsInfo {
+export interface IGlobalOptionsInfo {
     geminiUserName?: string
     geminiUserToken?: string
     customGeminiAPI?: string
     useAPICredentials?: APICredentials
+    useStream?: boolean
 }
 
-export interface ChatState extends ICredentialsInfo {
+export interface ChatState extends IGlobalOptionsInfo {
     requestInQueueFetching: boolean
     conversationList: IConversation[]
     imageResourceList: IImageItem[]

@@ -7,10 +7,10 @@ import {
     getGeminiContentAnswer,
     deleteImageFromInput,
     archiveConversationHistory,
-    updateCredentialsInfo,
+    updateGlobalOptionsInfo,
 } from '../../(pages)/chat/slice'
 import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import { IConversation, ICredentialsInfo } from '../../(pages)/chat/interface'
+import { IConversation, IGlobalOptionsInfo } from '../../(pages)/chat/interface'
 import { APICredentials, IChatItem, IImageItem } from '@/app/shared/interfaces'
 import UploadImageButton from './UploadImageButton'
 import { Dialog, DialogContent } from '@/app/components/ui/dialog'
@@ -117,7 +117,6 @@ const ChatInputWithAttachment = ({
                         conversation,
                         history: _history,
                         inputText: inputValue.replace(/\n/g, '\n\n'),
-                        isStream: Number(queryIsStream) == 1,
                     })
                 )
             } else {
@@ -127,7 +126,6 @@ const ChatInputWithAttachment = ({
                         conversation,
                         history: _history,
                         inputText: inputValue.replace(/\n/g, '\n\n'),
-                        isStream: Number(queryIsStream) == 1,
                     })
                 )
             }
@@ -161,13 +159,13 @@ const ChatInputWithAttachment = ({
         dispatch(archiveConversationHistory(conversation))
     }
 
-    const handleConfirmDialog = (valueObj: Partial<ICredentialsInfo>) => {
+    const handleConfirmDialog = (valueObj: Partial<IGlobalOptionsInfo>) => {
         setShowGlobalOptions(false)
-        dispatch(updateCredentialsInfo(valueObj))
+        dispatch(updateGlobalOptionsInfo(valueObj))
     }
-    const handleConfirmDrawer = (valueObj: Partial<ICredentialsInfo>) => {
+    const handleConfirmDrawer = (valueObj: Partial<IGlobalOptionsInfo>) => {
         setShowGlobalOptions(false)
-        dispatch(updateCredentialsInfo(valueObj))
+        dispatch(updateGlobalOptionsInfo(valueObj))
     }
 
     const showImages = attachable && !_.isEmpty(inputImageList)

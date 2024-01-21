@@ -70,25 +70,27 @@ export default function Popup({ children, trigger, title, showConfirm, confirmCa
                                                 type="button"
                                                 className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-3 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none  focus-visible:ring-gray-500 focus-visible:ring-offset-2"
                                                 onClick={() => {
+                                                    closePopup()
+                                                }}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-3"
+                                                onClick={() => {
                                                     confirmCallBack()
                                                     closePopup()
                                                 }}
                                             >
                                                 Confirm
                                             </button>
-                                            <button
-                                                type="button"
-                                                className="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-3 text-sm font-medium text-green-600 hover:bg-green-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
-                                                onClick={closePopup}
-                                            >
-                                                Cancel
-                                            </button>
                                         </div>
                                     ) : (
                                         <div className="mt-12 w-full flex items-center justify-end">
                                             <button
                                                 type="button"
-                                                className="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-3 text-sm font-medium text-green-600 hover:bg-green-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                                                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-3"
                                                 onClick={closePopup}
                                             >
                                                 Close

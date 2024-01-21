@@ -137,13 +137,14 @@ export const GlobalOptionsMain = ({
                             <SelectValue placeholder="Select API Credentials" />
                         </SelectTrigger>
                         <SelectContent position="popper">
-                            <SelectItem value={APICredentials.customAPI}>Self Gemini Pro API</SelectItem>
+                            <SelectItem value={APICredentials.customAPI}>Self Gemini Pro API Key</SelectItem>
                             <SelectItem value={APICredentials.userToken}>Username & Password</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 {tempUseAPICredentials == APICredentials.userToken ? (
                     <>
+                        <hr className="flex-grow border-t border-gray-300 my-2" />
                         <div className="flex flex-col space-y-1.5">
                             <Label htmlFor="gemini_user_name">User Name</Label>
                             <Input
@@ -165,15 +166,18 @@ export const GlobalOptionsMain = ({
                     </>
                 ) : null}
                 {tempUseAPICredentials == APICredentials.customAPI ? (
-                    <div className="flex flex-col space-y-1.5">
-                        <Label htmlFor="gemini_custom_api">Gemini API Key</Label>
-                        <Input
-                            id="gemini_custom_api"
-                            value={tempCustomGeminiAPI}
-                            placeholder="your Gemini API Key"
-                            onChange={handleChangeCustomAPI}
-                        />
-                    </div>
+                    <>
+                        <hr className="flex-grow border-t border-gray-300 my-2" />
+                        <div className="flex flex-col space-y-1.5">
+                            <Label htmlFor="gemini_custom_api">Gemini Pro API Key</Label>
+                            <Input
+                                id="gemini_custom_api"
+                                value={tempCustomGeminiAPI}
+                                placeholder="your Gemini Pro API Key"
+                                onChange={handleChangeCustomAPI}
+                            />
+                        </div>
+                    </>
                 ) : null}
 
                 <div className="flex flex-col space-y-1.5 mt-6">

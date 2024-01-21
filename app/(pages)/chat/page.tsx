@@ -24,8 +24,8 @@ export const Chat: NextPage<{ serverSideData: any }, any> = ({ serverSideData }:
         // We listen to the resize event
         window.addEventListener('resize', () => {
             // We execute the same script as before
-            let vh = window.innerHeight * 0.01
-            console.log(vh)
+            let vh = Math.min(document?.documentElement?.clientHeight || window.innerHeight, window.innerHeight) * 0.01
+            console.log(`resizing, new view height`, vh)
             setVirtualHeight(vh)
             document.documentElement.style.setProperty('--vh', `${vh}px`)
         })

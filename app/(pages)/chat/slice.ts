@@ -795,7 +795,7 @@ export const chatSlice = createSlice({
                 return conversationId == c.conversationId
             })
             const theConversation = conversationList[theConversationIndex]
-            console.log(`theConversation`, theConversation)
+            // console.log(`theConversation`, theConversation)
             if (!theConversation) {
                 return state
             }

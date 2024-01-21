@@ -291,7 +291,7 @@ const ChatContentItem = ({
     return (
         <>
             <div
-                className={`flex flex-row items-center flex-grow ${role == Roles.model ? roleAiClass : roleHumanClass}`}
+                className={`flex flex-row items-center flex-grow break-all break-words whitespace-normal overflow-x-scroll ${role == Roles.model ? roleAiClass : roleHumanClass}`}
             >
                 {role == Roles.user && isFailed ? (
                     <div className="flex-1 flex items-center justify-end mr-4">

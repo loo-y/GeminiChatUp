@@ -228,7 +228,7 @@ const ChatInputWithAttachment = ({
                                 ) : null}
                                 <div className=" items-center flex">
                                     <div
-                                        className="svg-image flex h-10 w-10 overflow-hidden items-center justify-center cursor-pointer bg-lightGreen rounded-full"
+                                        className="svg-image flex h-10 w-10 pl-1 overflow-hidden items-center justify-center cursor-pointer bg-lightGreen rounded-full"
                                         onClick={handleSendQuestion}
                                     >
                                         <img src={'/images/send.svg'} className="h-6 w-6 " />

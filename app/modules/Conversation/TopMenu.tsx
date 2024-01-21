@@ -35,8 +35,22 @@ const TopMenu = ({ clickCallback }: { clickCallback?: () => void }) => {
                     </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="ml-4">
-                    <DropdownMenuItem onClick={handleAddProConsation}>Pro Conversation</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAddProVisionContext}>Vision Content</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleAddProConsation}>
+                        <div className="flex flex-row justify-between gap-2 w-full">
+                            <div>Pro Conversation</div>
+                            <div className="svg-image flex h-6 w-6 overflow-hidden items-center justify-end cursor-pointer bg-transparent">
+                                <img src={`/images/chat-black.svg`} className="h-[1.1rem] w-[1.1rem] mr-[0.12rem]" />
+                            </div>
+                        </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleAddProVisionContext}>
+                        <div className="flex flex-row justify-between gap-2 w-full">
+                            <div>Vision Content</div>
+                            <div className="svg-image flex h-6 w-6 overflow-hidden items-center justify-end cursor-pointer bg-transparent">
+                                <img src={`/images/image-black.svg`} className="h-5 w-5" />
+                            </div>
+                        </div>
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
             <div className="flex ml-auto items-center">

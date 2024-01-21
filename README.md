@@ -4,18 +4,24 @@
 ## 关于
 本项目为基于 Google GeminiPro API Key 的聊天应用，支持响应式布局。可保留多组对话，每组对话的基础参数可单独设置。
 
+## 如何使用
 [Demo](https://chatup.moca.one) 
->需使用账号登录，或提供自己的 Gemini Pro API Key。点击查看[如何部署此功能](#user_credential)
+>需使用账号登录，或提供自己的 Gemini Pro API Key。<br />
+>开发者点击查看[如何部署此功能](#user_credential)
 
+#### 账号/密码
 |测试账号|密码|
 |--|--|
 |guest|guest123456|
+<br />
 
-<img width="400" alt="SCR-20240120-penj" src="https://github.com/loo-y/GeminiChatUp/assets/2792566/664f1f7b-832f-41ab-b817-f0c92deb1fb2">
+#### 流式对话
+<img width="400" alt="SCR-20240121-shmh" src="https://github.com/loo-y/GeminiChatUp/assets/2792566/4f91a1b7-2773-4a5a-93a0-1fa294d17174">
+<br />
 <br />
 
 
-## 如何使用
+## 如何部署
 ### 获取 Gemini API 密钥
 
 [获取API密钥](https://makersuite.google.com/app/apikey)
@@ -63,7 +69,7 @@ npm run dev
 
 ### 待完成
 
-1. 流式问答
+1. ~~流式问答~~ (已完成)
 2. ~~清除之前的conversation~~ (已完成)
 3. ~~计算token并移除超出的conversation~~ (已完成)
 4. ~~全局设置，支持客户端引入 GeminiPro API~~ (已完成)

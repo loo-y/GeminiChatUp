@@ -208,7 +208,7 @@ export const GeminiStreamChat = async ({
         let text = ''
         for await (const chunk of streamResult.stream) {
             const chunkText = chunk.text()
-            // console.log(chunkText)
+            // console.log(`chunkText,`, chunkText)
             streamHanler({
                 token: chunkText,
                 status: true,

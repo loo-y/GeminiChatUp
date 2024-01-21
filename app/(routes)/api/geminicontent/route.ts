@@ -86,7 +86,7 @@ const getGeminiSSEResponse = ({
         streamHanler: ({ token, error, status }) => {
             if (status) {
                 writer.write(eventMsgHeader)
-                const message = `data: ${token.replace(/\n/, '\\n')}\n\n`
+                const message = `data: ${token.replace(/\n/g, '\\n')}\n\n`
                 const messageUint8Array = encoder.encode(message)
                 writer.write(messageUint8Array)
             } else {

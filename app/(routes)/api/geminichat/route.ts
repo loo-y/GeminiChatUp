@@ -4,7 +4,7 @@ import { ISafetySetting, IGenerationConfig, IChatItem } from '../../gemini/inter
 import { headers } from 'next/headers'
 
 export const runtime = 'edge'
-export const regions = ['cle1', 'iad1', 'pdx1', 'sfo1', 'sin1', 'syd1', 'hnd1', 'kix1']
+export const preferredRegion = ['cle1', 'iad1', 'pdx1', 'sfo1', 'sin1', 'syd1', 'hnd1', 'kix1']
 
 export async function GET(request: NextRequest) {
     const inputText = request.nextUrl?.searchParams?.get('inputtext') || ''

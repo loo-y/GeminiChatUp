@@ -8,7 +8,7 @@ const errorResponseJson = {
     status: false,
     error: `please provide your token or api key`
 }
-export const regions = [
+export const preferredRegion = [
     "cle1",
     "iad1",
     "pdx1",
@@ -18,6 +18,7 @@ export const regions = [
     "hnd1",
     "kix1",
 ];
+
 export async function middleware(request: NextRequest) {
     // 没有配置 EDGE_CONFIG 的情况下，默认放过
     const { EDGE_CONFIG = '' } = process.env || {}

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GeminiContent, IGeminiContentProps, GeminiStreamContent, IGeminiStreamContentProps } from '../../gemini'
 
 export const runtime = 'edge'
+export const preferredRegion = ['cle1', 'iad1', 'pdx1', 'sfo1', 'sin1', 'syd1', 'hnd1', 'kix1']
+
 export async function GET(request: NextRequest) {
     const prompt = request.nextUrl?.searchParams?.get('prompt') || ''
     const modelResponse = await getGeminiResponse({

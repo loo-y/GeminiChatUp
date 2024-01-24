@@ -47,14 +47,17 @@
 
 ### 本地启动
 1. 安装依赖包 
-```
-npm i
-```
+    ```
+    npm i
+    ```
 
-2. 本地启动
-```javascript
-npm run dev
-```
+2. 新建```.env```文件，将```.env.example```文件内的内容复制进```.env```，并修改为自己的API Key以及配置项
+<br />
+
+3. 本地启动
+    ```javascript
+    npm run dev
+    ```
 
 ## Screenshots
 <br />

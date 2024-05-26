@@ -14,9 +14,9 @@ import { useSearchParams } from 'next/navigation'
 import { IConversation } from '../../(pages)/chat/interface'
 import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import ReactMarkdown from 'react-markdown'
-import SyntaxHighlighter from 'react-syntax-highlighter'
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
-import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { dark, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { formatDate } from '@/app/shared/utils'
 import Popup from '@/app/components/Popup'
 import RangeInput from '@/app/components/RangeInput'
@@ -341,7 +341,7 @@ const ChatContentItem = ({
                                             wrapLongLines={true}
                                             PreTag="div"
                                             language={match[1]}
-                                            style={docco}
+                                            style={vscDarkPlus}
                                         >
                                             {String(children).replace(/\n$/, '')}
                                         </SyntaxHighlighter>

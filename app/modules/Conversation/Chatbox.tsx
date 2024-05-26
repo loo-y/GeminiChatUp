@@ -14,7 +14,7 @@ import { useSearchParams } from 'next/navigation'
 import { IConversation } from '../../(pages)/chat/interface'
 import { IChatItem, IImageItem } from '@/app/shared/interfaces'
 import ReactMarkdown from 'react-markdown'
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { dark, vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { formatDate } from '@/app/shared/utils'
@@ -332,16 +332,26 @@ const ChatContentItem = ({
                             code(props) {
                                 const { children, className, node, ...rest } = props
                                 const match = /language-(\w+)/.exec(className || '')
+                                const codeName = match?.[1] || ''
                                 return match ? (
-                                    <div className="text-sm mb-2 ">
+                                    <div className="text-sm mb-2 flex gap-0 flex-col">
+                                        <div className="flex items-center relative bg-gray-950 text-gray-300 text-token-text-secondary bg-token-main-surface-secondary px-4 py-2 text-xs font-sans justify-between rounded-t-md">
+                                            <span>{codeName}</span>
+                                            <div className="flex items-center">
+                                                <span className="" data-state="closed">
+                                                    <button className="flex gap-1 items-center">Copy code</button>
+                                                </span>
+                                            </div>
+                                        </div>
                                         {/* @ts-ignore */}
                                         <SyntaxHighlighter
                                             {...rest}
                                             wrapLines={true}
                                             wrapLongLines={true}
-                                            PreTag="div"
-                                            language={match[1]}
+                                            PreTag="pre"
+                                            language={codeName}
                                             style={vscDarkPlus}
+                                            className={`rounded-b-md !mt-0`}
                                         >
                                             {String(children).replace(/\n$/, '')}
                                         </SyntaxHighlighter>
